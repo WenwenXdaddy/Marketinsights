@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Positioning Risk Monitor | 2026-03-17</title>
+<meta property="og:title" content="Positioning Risk Monitor — CTA × Gamma × Vol × Oil Shock">
+<meta property="og:description" content="SPX持仓风险综合分析：CTA触发水位、Dealer Gamma、VIX结构、Hormuz油价冲击。基于GS/BofA/Citadel数据框架。2026-03-17">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0e17;--card:#111827;--border:#1e293b;
+  --red:#ef4444;--amber:#f59e0b;--green:#22c55e;--cyan:#06b6d4;
+  --blue:#3b82f6;--purple:#a855f7;
+  --text:#e2e8f0;--muted:#94a3b8;--dim:#64748b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans','Noto Sans SC',system-ui,sans-serif;font-size:13px;min-height:100vh}
+.mono{font-family:'JetBrains Mono','Fira Code',monospace}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.header{background:linear-gradient(180deg,var(--card),var(--bg));border-bottom:1px solid var(--border);padding:16px 20px}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.title{font-size:18px;font-weight:700;letter-spacing:-.5px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.5px}
+.pulse-dot{display:inline-block;width:8px;height:8px;border-radius:50%;animation:pulse 2s ease-in-out infinite}
+.metrics{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;flex:1;min-width:120px}
+.metric-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.metric-value{font-size:22px;font-weight:700;line-height:1.1}
+.metric-sub{font-size:10px;margin-top:3px}
+
+.tabs{display:flex;gap:2px;padding:8px 20px;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{background:transparent;border:1px solid transparent;border-radius:6px;padding:8px 14px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;transition:all .2s;white-space:nowrap;font-family:inherit}
+.tab.active{background:var(--card);border-color:var(--border);color:#fff}
+.tab:hover{color:#fff}
+
+.content{padding:16px 20px;max-width:1200px;margin:0 auto;animation:fadeIn .3s ease}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px}
+.section-title{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.section-title span:last-child{font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.chart-wrap{position:relative;width:100%;margin:4px 0}
+.note{font-size:11px;color:var(--dim);margin-top:8px;font-style:italic}
+
+.bar-row{margin-bottom:10px}
+.bar-header{display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px}
+.bar-track{height:6px;background:var(--border);border-radius:3px;position:relative}
+.bar-fill{height:100%;border-radius:3px;transition:width .8s ease}
+.bar-peak{position:absolute;top:-2px;width:2px;height:10px;background:var(--red);border-radius:1px}
+.bar-label{font-size:10px;color:var(--dim);margin-top:2px}
+
+.flow-card{border-radius:8px;padding:14px;text-align:center}
+.flow-value{font-size:28px;font-weight:700}
+.trigger-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:6px;margin-bottom:8px}
+.trigger-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.chain-step{padding:4px 8px;border-radius:4px;border-left:2px solid;font-size:12px;margin-bottom:5px}
+.liq-card{padding:12px;background:var(--bg);border-radius:6px;text-align:center}
+.scenario-card{padding:16px;border-radius:8px}
+.scenario-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.scenario-metric{padding:6px;background:var(--bg);border-radius:4px;text-align:center}
+.action-row{display:flex;gap:12px;padding:12px;border-radius:6px;margin-bottom:8px}
+
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:8px 12px;text-align:left;color:var(--dim);font-weight:600;font-size:11px;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border)}
+
+.alert-box{border-radius:10px;padding:18px;margin-bottom:16px}
+.info-box{margin-top:12px;padding:12px;background:var(--bg);border-radius:6px;font-size:11px;color:var(--muted);line-height:1.6}
+.footer{margin-top:20px;padding:12px 0;border-top:1px solid var(--border);font-size:10px;color:var(--dim);text-align:center}
+
+@media(max-width:768px){
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .metrics{flex-direction:column}
+  .metric{min-width:auto}
+  .scenario-metrics{grid-template-columns:1fr 1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <span class="title">POSITIONING RISK MONITOR</span>
+        <span class="badge" style="background:#ef444418;color:var(--red)"><span class="pulse-dot" style="background:var(--red);box-shadow:0 0 8px #ef444480"></span> 高风险环境</span>
+      </div>
+      <div style="font-size:11px;color:var(--dim)">CTA触发 × Dealer Gamma × Vol Surface × Oil Shock | 基于GS/BofA/Citadel持仓数据框架</div>
+    </div>
+    <div class="mono" style="text-align:right;font-size:11px;color:var(--dim)">
+      <div>2026年3月17日 周二</div>
+      <div>数据截至: Mar 16 close + pre-mkt</div>
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">S&P 500</div><div class="metric-value mono" style="color:var(--red)">6,670</div><div class="metric-sub" style="color:var(--red)">▼ 4.9% from ATH (7,030)</div></div>
+    <div class="metric"><div class="metric-label">VIX</div><div class="metric-value mono" style="color:var(--amber)">25.5</div><div class="metric-sub" style="color:var(--green)">93rd %ile (1Y)</div></div>
+    <div class="metric"><div class="metric-label">Brent</div><div class="metric-value mono" style="color:var(--red)">$105</div><div class="metric-sub" style="color:var(--green)">▲ $34 vs Mar 2 ($71)</div></div>
+    <div class="metric"><div class="metric-label">VVIX</div><div class="metric-value mono" style="color:var(--amber)">128</div><div class="metric-sub" style="color:var(--muted)">高位但非极端</div></div>
+    <div class="metric"><div class="metric-label">距长期CTA触发</div><div class="metric-value mono" style="color:var(--green)">4.9%</div><div class="metric-sub" style="color:var(--muted)">长期线: 6,341</div></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs" id="tabBar">
+  <button class="tab active" data-tab="overview">◉ 总览</button>
+  <button class="tab" data-tab="cta">⚡ CTA触发</button>
+  <button class="tab" data-tab="gamma">Γ Dealer Gamma</button>
+  <button class="tab" data-tab="vol">∿ Vol结构</button>
+  <button class="tab" data-tab="scenarios">⊕ 情景分析</button>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- ===== OVERVIEW ===== -->
+<div class="panel active" id="panel-overview">
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-title"><span style="font-size:16px">⬡</span><span>综合风险雷达</span></div>
+      <div class="chart-wrap" style="height:290px"><canvas id="radarChart"></canvas></div>
+      <div class="note">数值为风险强度百分位（0=安全，100=极端危险）</div>
+    </div>
+    <div class="card">
+      <div class="section-title"><span style="font-size:16px">📊</span><span>投资者持仓百分位</span></div>
+      <div id="positioningBars"></div>
+    </div>
+  </div>
+  <div class="alert-box" style="background:linear-gradient(135deg,#dc262620,#f59e0b20);border:1px solid #ef444440">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:16px">⚠️</span>
+      <span style="font-weight:700;color:var(--amber);font-size:13px">核心风险评估</span>
+    </div>
+    <div style="font-size:12px;line-height:1.7">
+      <strong style="color:var(--red)">SPX已跌穿短期和中期CTA触发位</strong>，短期模型大概率已翻空，中期模型正在系统性减仓。BofA估算CTA从~$180B净多头已"大幅平仓"，仅余残留多头。但<strong style="color:var(--amber)">长期触发位6,341尚未被测试</strong>——若油价冲击延续导致SPX进一步下探，将释放额外数百亿美元系统性卖压。同时Dealer处于<strong style="color:var(--red)">短Gamma环境</strong>，意味着市场下跌时对冲行为会放大波动而非吸收。Pasquariello判断：市场尚未达到"genuine capitulation"——fast money已减仓但broader investor base仍持有大量敞口。
+    </div>
+  </div>
+</div>
+
+<!-- ===== CTA ===== -->
+<div class="panel" id="panel-cta">
+  <div class="card">
+    <div class="section-title"><span style="font-size:16px">⚡</span><span>SPX走势 vs CTA触发水位</span></div>
+    <div class="chart-wrap" style="height:340px"><canvas id="ctaChart"></canvas></div>
+    <div class="note">红线=短期触发(6906)，橙线=中期触发(6752)，绿线=长期触发(6341)。SPX已击穿前两个水位。青线=当前~6670。</div>
+  </div>
+  <div class="card">
+    <div class="section-title"><span style="font-size:16px">💰</span><span>CTA资金流情景 (未来一周估算, BofA)</span></div>
+    <div class="grid-3">
+      <div class="flow-card" style="background:#ef444410;border:1px solid #ef444430"><div style="font-size:11px;color:var(--muted);margin-bottom:6px">市场下跌5%</div><div style="font-size:11px;color:var(--dim);margin-bottom:4px">SPX ~6300</div><div class="flow-value mono" style="color:var(--red)">-62B</div><div style="font-size:10px;color:var(--dim);margin-top:4px">系统性卖出</div></div>
+      <div class="flow-card" style="background:#f59e0b10;border:1px solid #f59e0b30"><div style="font-size:11px;color:var(--muted);margin-bottom:6px">市场持平</div><div style="font-size:11px;color:var(--dim);margin-bottom:4px">SPX ~6630</div><div class="flow-value mono" style="color:var(--amber)">-14B</div><div style="font-size:10px;color:var(--dim);margin-top:4px">系统性卖出</div></div>
+      <div class="flow-card" style="background:#22c55e10;border:1px solid #22c55e30"><div style="font-size:11px;color:var(--muted);margin-bottom:6px">市场反弹3%</div><div style="font-size:11px;color:var(--dim);margin-bottom:4px">SPX ~6830</div><div class="flow-value mono" style="color:var(--green)">+87B</div><div style="font-size:10px;color:var(--dim);margin-top:4px">系统性买入</div></div>
+    </div>
+    <div class="info-box"><strong style="color:var(--amber)">关键信息：</strong>即使市场持平，CTA仍将卖出~$14B。只有反弹3%+才能触发净买入。GS PB数据显示上周净卖出为Liberation Day以来最大，过去7周有6周净卖出。风险平价(81st %ile)和波动率控制(71st %ile)策略仍有较大减仓空间。</div>
+  </div>
+  <div id="triggerStatus"></div>
+</div>
+
+<!-- ===== GAMMA ===== -->
+<div class="panel" id="panel-gamma">
+  <div class="card">
+    <div class="section-title"><span style="font-size:16px">Γ</span><span>SPX Dealer GEX Profile (估算)</span></div>
+    <div class="chart-wrap" style="height:310px"><canvas id="gexChart"></canvas></div>
+    <div class="note">当前SPX ~6670处于深度负Gamma区域。绿=正Gamma(稳定器)，红=负Gamma(加速器)。</div>
+  </div>
+  <div class="grid-2">
+    <div style="background:linear-gradient(135deg,#dc262620,transparent);border:1px solid #ef444430;border-radius:10px;padding:18px">
+      <div style="font-weight:700;color:var(--red);margin-bottom:8px;font-size:14px">⬤ 当前：负Gamma环境</div>
+      <div style="font-size:12px;line-height:1.7;color:var(--muted)">
+        SPX ~6670处于<strong style="color:var(--text)">GEX -7.2至-4.8区间</strong>（估算峰值负gamma在6650附近）。Dealer需要<strong style="color:var(--red)">顺势对冲</strong>：市场下跌→Dealer卖出→进一步压低价格。GS描述dealer convexity为"very aggressive short"。BofA确认SPX options gamma已翻为increasingly short。
+        <br><br><strong style="color:var(--amber)">翻转条件：</strong>SPX需反弹至~6800-6850以上才能进入正Gamma区域。
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,#06b6d420,transparent);border:1px solid #06b6d430;border-radius:10px;padding:18px">
+      <div style="font-weight:700;color:var(--cyan);margin-bottom:8px;font-size:14px">◐ Gamma对冲传导链</div>
+      <div id="chainSteps"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="section-title"><span style="font-size:16px">💧</span><span>流动性状况</span></div>
+    <div class="grid-3">
+      <div class="liq-card"><div style="font-size:10px;color:var(--dim);margin-bottom:4px">E-mini盘口深度</div><div class="mono" style="font-size:22px;font-weight:700;color:var(--red)">~$4M</div><div style="font-size:10px;color:var(--dim);margin-top:2px">均值: $13.7M</div><span class="badge" style="background:#ef444418;color:var(--red);margin-top:4px">↓ 70%</span></div>
+      <div class="liq-card"><div style="font-size:10px;color:var(--dim);margin-bottom:4px">ETF交易量占比</div><div class="mono" style="font-size:22px;font-weight:700;color:var(--amber)">~40%</div><div style="font-size:10px;color:var(--dim);margin-top:2px">均值: 28%</div><span class="badge" style="background:#f59e0b18;color:var(--amber);margin-top:4px">98th %ile</span></div>
+      <div class="liq-card"><div style="font-size:10px;color:var(--dim);margin-bottom:4px">Intraday vs Close Vol</div><div class="mono" style="font-size:22px;font-weight:700;color:var(--red)">44x</div><div style="font-size:10px;color:var(--dim);margin-top:2px">正常 10-15x</div><span class="badge" style="background:#ef444418;color:var(--red);margin-top:4px">95th %ile</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== VOL ===== -->
+<div class="panel" id="panel-vol">
+  <div class="card">
+    <div class="section-title"><span style="font-size:16px">∿</span><span>VIX & VVIX 走势</span></div>
+    <div class="chart-wrap" style="height:290px"><canvas id="vixChart"></canvas></div>
+    <div class="note">VIX 25.5 处于1年93rd百分位。VVIX 128在近年growth scare中多次触及但远低于cycle highs。Pasquariello判断：vol surface尚未反映充分severity。</div>
+  </div>
+  <div class="card">
+    <div class="section-title"><span style="font-size:16px">📈</span><span>VIX期限结构 (当前 vs 正常)</span></div>
+    <div class="chart-wrap" style="height:260px"><canvas id="termChart"></canvas></div>
+    <div class="note">Backwardation结构（近端高于远端）反映短期恐慌。但deferred合约相对历史恐慌时期移动不大——市场未Price in持续冲击。这是vol protection相对便宜的窗口。</div>
+  </div>
+  <div class="card">
+    <div class="section-title"><span style="font-size:16px">🛢️</span><span>Brent原油走势 (Hormuz危机)</span></div>
+    <div class="chart-wrap" style="height:270px"><canvas id="oilChart"></canvas></div>
+    <div class="note">GS base case: 21天limited flow + 30天recovery → Brent 3-4月均价$98。本周六(3/21)21天窗口到期，风险偏向delay。当前$105已超GS预测。</div>
+  </div>
+</div>
+
+<!-- ===== SCENARIOS ===== -->
+<div class="panel" id="panel-scenarios">
+  <div class="card">
+    <div class="section-title"><span style="font-size:16px">📋</span><span>历史油价冲击 vs 当前对比</span></div>
+    <table>
+      <thead><tr><th>事件</th><th>SPX最大跌幅</th><th>油价峰值</th><th>持续天数</th></tr></thead>
+      <tbody>
+        <tr><td>1990 Gulf War</td><td class="mono" style="color:var(--red)">-20%</td><td class="mono">$41</td><td class="mono">90天</td></tr>
+        <tr><td>2008 供应紧缩</td><td class="mono" style="color:var(--red)">-17%</td><td class="mono">$147</td><td class="mono">120天</td></tr>
+        <tr><td>2011 Arab Spring</td><td class="mono" style="color:var(--red)">-7%</td><td class="mono">$127</td><td class="mono">60天</td></tr>
+        <tr><td>2022 俄乌战争</td><td class="mono" style="color:var(--red)">-13%</td><td class="mono">$130</td><td class="mono">45天</td></tr>
+        <tr style="background:#06b6d408"><td style="font-weight:700;color:var(--cyan)">2026 Hormuz危机 <span class="badge" style="background:#06b6d418;color:var(--cyan)">当前</span></td><td class="mono" style="color:var(--red)">-5.2%</td><td class="mono">$119</td><td class="mono">进行中</td></tr>
+      </tbody>
+    </table>
+    <div class="info-box"><strong style="color:var(--amber)">GS历史数据：</strong>S&P在油价上升期平均下跌12%，冲击周期总跌幅达23%。当前SPX仅跌~5.2%，若参照历史均值仍有<strong style="color:var(--red)">显著下行空间</strong>。Brett Nelson反驳：历史上仅靠油价不够，需要更多条件配合。</div>
+  </div>
+  <div class="card">
+    <div class="section-title"><span style="font-size:16px">⊕</span><span>前瞻情景矩阵</span></div>
+    <div class="grid-2" id="scenarioGrid"></div>
+  </div>
+  <div style="background:linear-gradient(135deg,#06b6d420,#a855f720);border:1px solid #06b6d430;border-radius:10px;padding:18px">
+    <div class="section-title"><span style="font-size:16px">🎯</span><span>交易思路与风控框架</span></div>
+    <div id="actionItems"></div>
+  </div>
+</div>
+
+<div class="footer">
+  数据来源：GS Pasquariello Markets/Macro (3/16), GS Flow of Funds, BofA Systematic Flows, Citadel Securities GMI, OptionsDepth API<br>
+  本分析框架仅供研究参考，不构成投资建议。所有CTA触发水位、GEX估算基于公开可得的机构报告数据。
+</div>
+</div>
+
+<script>
+// ── Tab switching ──
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const panel = document.getElementById('panel-' + btn.dataset.tab);
+    panel.classList.add('active');
+    // Lazy init charts
+    if (btn.dataset.tab === 'overview' && !window._radarDone) initOverview();
+    if (btn.dataset.tab === 'cta' && !window._ctaDone) initCTA();
+    if (btn.dataset.tab === 'gamma' && !window._gammaDone) initGamma();
+    if (btn.dataset.tab === 'vol' && !window._volDone) initVol();
+    if (btn.dataset.tab === 'scenarios' && !window._scenDone) initScenarios();
+  });
+});
+
+// ── Chart.js defaults ──
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = '#1e293b';
+Chart.defaults.font.family = "'IBM Plex Sans','Noto Sans SC',sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+Chart.defaults.plugins.legend.labels.padding = 12;
+
+// ── OVERVIEW ──
+function initOverview() {
+  window._radarDone = true;
+  const labels = ['CTA卖压','Dealer短Gamma','VIX期限结构','油价冲击持续','流动性枯竭','投资者未出清'];
+  const values = [85, 78, 65, 90, 72, 70];
+  new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        label: '风险水平',
+        data: values,
+        backgroundColor: '#ef444425',
+        borderColor: '#ef4444',
+        borderWidth: 2,
+        pointBackgroundColor: '#ef4444',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      scales: { r: { min: 0, max: 100, ticks: { stepSize: 25, backdropColor: 'transparent' }, grid: { color: '#1e293b' }, angleLines: { color: '#1e293b' }, pointLabels: { font: { size: 11 } } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+  // Positioning bars
+  const pos = [
+    { name:'CTA净多头', current:15, peak:85, label:'已大幅减仓' },
+    { name:'风险平价', current:72, peak:81, label:'仍高位' },
+    { name:'波动率控制', current:58, peak:71, label:'中高位' },
+    { name:'对冲基金净敞口', current:45, peak:78, label:'已减仓' },
+    { name:'零售投资者', current:62, peak:88, label:'缓慢退出' },
+    { name:'企业回购', current:10, peak:65, label:'Blackout' },
+  ];
+  const container = document.getElementById('positioningBars');
+  pos.forEach(d => {
+    const c = d.current < 30 ? 'var(--green)' : d.current > 60 ? 'var(--amber)' : 'var(--cyan)';
+    container.innerHTML += `
+      <div class="bar-row">
+        <div class="bar-header"><span>${d.name}</span><span style="font-size:11px;color:${c}">${d.current}th %ile <span style="color:var(--dim)">（峰值 ${d.peak}th）</span></span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${d.current}%;background:${c}"></div><div class="bar-peak" style="left:${d.peak}%"></div></div>
+        <div class="bar-label">${d.label}</div>
+      </div>`;
+  });
+}
+
+// ── CTA ──
+function initCTA() {
+  window._ctaDone = true;
+  const labels = ['Jan 2','Jan 10','Jan 17','Jan 24','Jan 28','Feb 3','Feb 7','Feb 14','Feb 19','Feb 27','Mar 3','Mar 7','Mar 10','Mar 13','Mar 17E'];
+  const vals = [6920,6950,6980,7010,7030,6940,6879,6850,6862,6780,6830,6750,6690,6632,6670];
+  new Chart(document.getElementById('ctaChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'SPX',
+        data: vals,
+        borderColor: '#3b82f6',
+        backgroundColor: '#3b82f620',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3,
+        pointBackgroundColor: '#3b82f6',
+      }]
+    },
+    options: {
+      scales: { y: { min: 6200, max: 7100, grid: { color: '#1e293b' } }, x: { grid: { display: false } } },
+      plugins: {
+        annotation: undefined,
+        legend: { display: false },
+      }
+    },
+    plugins: [{
+      id: 'triggerLines',
+      afterDraw(chart) {
+        const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+        const lines = [
+          { val: 6906, color: '#ef4444', label: '短期 6906' },
+          { val: 6752, color: '#f59e0b', label: '中期 6752' },
+          { val: 6341, color: '#22c55e', label: '长期 6341' },
+          { val: 6670, color: '#06b6d4', label: '当前 ~6670', solid: true },
+        ];
+        lines.forEach(l => {
+          const yPos = y.getPixelForValue(l.val);
+          if (yPos < chart.chartArea.top || yPos > chart.chartArea.bottom) return;
+          ctx.save();
+          ctx.strokeStyle = l.color;
+          ctx.lineWidth = l.solid ? 2 : 1;
+          if (!l.solid) ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(left, yPos);
+          ctx.lineTo(right, yPos);
+          ctx.stroke();
+          ctx.fillStyle = l.color;
+          ctx.font = '10px "JetBrains Mono", monospace';
+          ctx.textAlign = 'right';
+          ctx.fillText(l.label, right - 4, yPos - 4);
+          ctx.restore();
+        });
+        // Shade danger zones
+        const midY = y.getPixelForValue(6752);
+        const longY = y.getPixelForValue(6341);
+        const bottomY = y.getPixelForValue(6200);
+        ctx.save();
+        ctx.fillStyle = '#f59e0b10';
+        ctx.fillRect(left, midY, right - left, longY - midY);
+        ctx.fillStyle = '#ef444410';
+        ctx.fillRect(left, longY, right - left, bottomY - longY);
+        ctx.restore();
+      }
+    }]
+  });
+  // Trigger status
+  const triggers = [
+    { name:'短期触发', level:'6,906', status:'已击穿', desc:'短期模型已翻空，持续系统性卖出', breached:true },
+    { name:'中期触发', level:'6,752', status:'已击穿', desc:'中期模型正从多头转向中性/空头，释放~$80B卖压', breached:true },
+    { name:'长期触发', level:'6,341', status:'安全缓冲 4.9%', desc:'最后一道防线。若被击穿，残余长期多头将全面出清', breached:false },
+  ];
+  const el = document.getElementById('triggerStatus');
+  triggers.forEach(t => {
+    const bc = t.breached ? 'var(--red)' : 'var(--green)';
+    el.innerHTML += `
+      <div class="trigger-row" style="background:${t.breached?'#ef444408':'#22c55e08'};border:1px solid ${t.breached?'#ef444420':'#22c55e20'}">
+        <div class="trigger-icon" style="background:${t.breached?'#dc262620':'#22c55e20'};color:${bc}">${t.breached?'✕':'✓'}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-weight:600">${t.name}</span>
+            <span class="mono" style="font-size:13px;color:${bc};font-weight:700">${t.level}</span>
+            <span class="badge" style="background:${bc}18;color:${bc}">${t.status}</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${t.desc}</div>
+        </div>
+      </div>`;
+  });
+}
+
+// ── GAMMA ──
+function initGamma() {
+  window._gammaDone = true;
+  const strikes = [6400,6450,6500,6550,6600,6650,6700,6750,6800,6850,6900,6950,7000];
+  const gex = [2.1,1.8,0.9,-1.2,-4.8,-7.2,-5.5,-3.1,1.5,4.2,8.5,6.1,12.3];
+  const colors = gex.map(v => v >= 0 ? '#22c55eb0' : '#ef4444b0');
+  new Chart(document.getElementById('gexChart'), {
+    type: 'bar',
+    data: {
+      labels: strikes,
+      datasets: [{ label: 'GEX', data: gex, backgroundColor: colors, borderRadius: 3 }]
+    },
+    options: {
+      scales: { y: { grid: { color: '#1e293b' } }, x: { grid: { display: false } } },
+      plugins: { legend: { display: false } }
+    },
+    plugins: [{
+      id: 'spotLine',
+      afterDraw(chart) {
+        const { ctx, chartArea, scales: { x, y } } = chart;
+        // Zero line
+        const zeroY = y.getPixelForValue(0);
+        ctx.save();
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(chartArea.left, zeroY);
+        ctx.lineTo(chartArea.right, zeroY);
+        ctx.stroke();
+        // Spot line at 6670 - find approximate x position
+        const idx = 6; // 6700 is index 6, 6670 is between 6650 (5) and 6700 (6)
+        const x1 = x.getPixelForValue(5);
+        const x2 = x.getPixelForValue(6);
+        const spotX = x1 + (x2 - x1) * 0.4; // interpolate
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.moveTo(spotX, chartArea.top);
+        ctx.lineTo(spotX, chartArea.bottom);
+        ctx.stroke();
+        ctx.fillStyle = '#06b6d4';
+        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('SPX 当前 ~6670', spotX, chartArea.top + 12);
+        ctx.restore();
+      }
+    }]
+  });
+  // Chain steps
+  const steps = [
+    ['① 油价冲击 → SPX下跌','var(--amber)'],
+    ['② SPX进入负Gamma区 → Dealer卖出对冲','var(--amber)'],
+    ['③ Dealer卖出 → SPX进一步下跌','var(--amber)'],
+    ['④ SPX下跌 → VIX上升','var(--amber)'],
+    ['⑤ VIX进入加速走廊(20-25) → 被放大','var(--amber)'],
+    ['⑥ VIX上升 → Vanna效应迫使更多卖出','var(--red)'],
+    ['⑦ 循环自我强化直到DEX墙封顶','var(--red)'],
+  ];
+  const cel = document.getElementById('chainSteps');
+  steps.forEach(([text, color]) => {
+    cel.innerHTML += `<div class="chain-step" style="border-color:${color};background:${color === 'var(--red)' ? '#ef444415' : '#f59e0b10'}">${text}</div>`;
+  });
+}
+
+// ── VOL ──
+function initVol() {
+  window._volDone = true;
+  // VIX + VVIX
+  const vDates = ['Jan 2','Jan 17','Feb 3','Feb 7','Feb 14','Feb 19','Feb 27','Mar 3','Mar 7','Mar 10','Mar 13','Mar 17E'];
+  const vix = [14.5,15.2,18.5,20.8,19.5,20.2,23.1,21.8,24.5,27.2,27.1,25.5];
+  const vvix = [90,92,108,118,112,115,125,120,128,135,132,128];
+  new Chart(document.getElementById('vixChart'), {
+    type: 'line',
+    data: {
+      labels: vDates,
+      datasets: [
+        { label: 'VIX', data: vix, borderColor: '#f59e0b', backgroundColor: '#f59e0b20', fill: true, tension: 0.3, yAxisID: 'y', pointRadius: 3 },
+        { label: 'VVIX', data: vvix, borderColor: '#a855f7', backgroundColor: 'transparent', fill: false, tension: 0.3, yAxisID: 'y1', pointRadius: 2, borderDash: [] },
+      ]
+    },
+    options: {
+      scales: {
+        y: { min: 10, max: 35, position: 'left', grid: { color: '#1e293b' } },
+        y1: { min: 80, max: 150, position: 'right', grid: { display: false } },
+        x: { grid: { display: false } }
+      }
+    },
+    plugins: [{
+      id: 'refLines',
+      afterDraw(chart) {
+        const { ctx, chartArea: { left, right }, scales: { y, y1 } } = chart;
+        // VIX 20
+        let py = y.getPixelForValue(20);
+        ctx.save(); ctx.strokeStyle = '#64748b'; ctx.setLineDash([4,4]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(left, py); ctx.lineTo(right, py); ctx.stroke();
+        ctx.fillStyle = '#64748b'; ctx.font = '9px sans-serif'; ctx.fillText('VIX 20', left + 4, py - 4);
+        // VVIX 130
+        py = y1.getPixelForValue(130);
+        ctx.strokeStyle = '#a855f7';
+        ctx.beginPath(); ctx.moveTo(left, py); ctx.lineTo(right, py); ctx.stroke();
+        ctx.fillStyle = '#a855f7'; ctx.textAlign = 'right'; ctx.fillText('VVIX 130', right - 4, py - 4);
+        ctx.restore();
+      }
+    }]
+  });
+  // Term structure
+  const tenors = ['VIX现货','UX1','UX2','UX3','UX4','UX5','UX6'];
+  const current = [25.5,24.8,23.5,22.9,22.2,21.8,21.5];
+  const baseline = [19,20,20.5,21,21,21,21];
+  new Chart(document.getElementById('termChart'), {
+    type: 'line',
+    data: {
+      labels: tenors,
+      datasets: [
+        { label: '当前', data: current, borderColor: '#f59e0b', backgroundColor: '#f59e0b20', fill: true, tension: 0.3, pointRadius: 4 },
+        { label: '正常水平', data: baseline, borderColor: '#64748b', borderDash: [6,4], fill: false, tension: 0.3, pointRadius: 0 },
+      ]
+    },
+    options: { scales: { y: { min: 16, max: 28, grid: { color: '#1e293b' } }, x: { grid: { display: false } } } }
+  });
+  // Oil
+  const oDates = ['Jan 2','Jan 17','Feb 3','Feb 14','Feb 27','Mar 2','Mar 5','Mar 7','Mar 10','Mar 11','Mar 12','Mar 13','Mar 14','Mar 16','Mar 17E'];
+  const brent = [72,71,73,74,75,71,82,91,96,91,100,105,119,102,105];
+  new Chart(document.getElementById('oilChart'), {
+    type: 'line',
+    data: {
+      labels: oDates,
+      datasets: [{ label: 'Brent', data: brent, borderColor: '#ef4444', backgroundColor: '#ef444420', fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: '#ef4444' }]
+    },
+    options: { scales: { y: { min: 65, max: 125, grid: { color: '#1e293b' } }, x: { grid: { display: false } } } },
+    plugins: [{
+      id: 'oilRef',
+      afterDraw(chart) {
+        const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+        [{v:98,c:'#f59e0b',t:'GS avg $98'},{v:71,c:'#22c55e',t:'GS H2 $71'}].forEach(l => {
+          const py = y.getPixelForValue(l.v);
+          ctx.save(); ctx.strokeStyle = l.c; ctx.setLineDash([6,4]); ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(left, py); ctx.lineTo(right, py); ctx.stroke();
+          ctx.fillStyle = l.c; ctx.font = '10px "JetBrains Mono", monospace'; ctx.textAlign = 'right';
+          ctx.fillText(l.t, right - 4, py - 4); ctx.restore();
+        });
+      }
+    }]
+  });
+}
+
+// ── SCENARIOS ──
+function initScenarios() {
+  window._scenDone = true;
+  const scenarios = [
+    { title:'Bull Case: 突然停火', prob:'25-30%', color:'#22c55e', spx:'6,900-7,000', vix:'18-20', oil:'$75-80', desc:'冲突在3/21前解决。VIX快速回落，CTA重建多头。Gap-up风险极大。' },
+    { title:'Base Case: 延迟但可控', prob:'35-40%', color:'#f59e0b', spx:'6,400-6,700', vix:'23-28', oil:'$95-110', desc:'GS base case延长至30+天。市场在当前区间震荡消化。Capitulation逐步发生。' },
+    { title:'Bear Case: 冲击升级', prob:'20-25%', color:'#ef4444', spx:'6,000-6,300', vix:'30-40', oil:'$120-150', desc:'Hormuz封锁长期化+布雷。长期CTA触发被击穿。Risk parity/Vol control被迫全面出清。' },
+    { title:'Tail Risk: 全面冲突', prob:'5-10%', color:'#ef4444', spx:'<6,000', vix:'40+', oil:'$150+', desc:'区域战争扩大。石油设施受损。类似2008级别supply disruption。SPX -20%+。' },
+  ];
+  const sg = document.getElementById('scenarioGrid');
+  scenarios.forEach(s => {
+    sg.innerHTML += `
+      <div class="scenario-card" style="background:${s.color}08;border:1px solid ${s.color}25">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;color:${s.color};font-size:13px">${s.title}</span>
+          <span class="badge" style="background:${s.color}18;color:${s.color}">概率 ${s.prob}</span>
+        </div>
+        <div class="scenario-metrics">
+          <div class="scenario-metric"><div style="font-size:9px;color:var(--dim)">SPX</div><div class="mono" style="font-size:12px;font-weight:600">${s.spx}</div></div>
+          <div class="scenario-metric"><div style="font-size:9px;color:var(--dim)">VIX</div><div class="mono" style="font-size:12px;font-weight:600">${s.vix}</div></div>
+          <div class="scenario-metric"><div style="font-size:9px;color:var(--dim)">Brent</div><div class="mono" style="font-size:12px;font-weight:600">${s.oil}</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5">${s.desc}</div>
+      </div>`;
+  });
+  // Action items
+  const actions = [
+    { action:'Raise Cash', desc:'Pasquariello最终建议：简化组合、提高现金。在asymmetry偏下行、capitulation未到的环境里最朴素也最有效。', priority:'高', color:'#ef4444' },
+    { action:'Deferred Vol Long', desc:'UX3等deferred VIX合约定价偏低（Pasquariello指出），若冲击延续re-pricing空间大。考虑VIX call spread 28/35。', priority:'中高', color:'#f59e0b' },
+    { action:'SPX Put Calendar', desc:'利用近月skew陡、远月vol偏低的结构。卖近月put + 买远月put，捕捉vol term structure re-pricing。', priority:'中', color:'#f59e0b' },
+    { action:'监控长期CTA触发6,341', desc:'距当前~5%。若被击穿意味着最后一批系统性多头全面出清，是最极端的卖压场景。作为risk management锚点。', priority:'关键', color:'#ef4444' },
+    { action:'Gap Risk双向管理', desc:'Pasquariello警告gap在两个方向都会发生。突然停火=巨大向上gap。避免裸空头寸，用spread结构控制风险。', priority:'中高', color:'#f59e0b' },
+  ];
+  const ai = document.getElementById('actionItems');
+  actions.forEach(d => {
+    ai.innerHTML += `
+      <div class="action-row" style="background:${d.color}08;border-left:3px solid ${d.color}">
+        <div style="min-width:60px"><span class="badge" style="background:${d.color}18;color:${d.color}">${d.priority}</span></div>
+        <div><div style="font-weight:700;margin-bottom:2px;font-size:13px">${d.action}</div><div style="font-size:11px;color:var(--muted);line-height:1.5">${d.desc}</div></div>
+      </div>`;
+  });
+}
+
+// Init first tab
+initOverview();
+</script>
+</body>
+</html>
