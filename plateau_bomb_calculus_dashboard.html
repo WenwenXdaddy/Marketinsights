@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revised Strategic Assessment — The Plateau, The Bomb & The Existential Calculus</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg-base: #06090f;
+    --bg-raised: #0d1117;
+    --bg-surface: #151b27;
+    --bg-surface-2: #1a2233;
+    --bg-hover: #1f2b3d;
+    --text-bright: #f0f4fc;
+    --text-primary: #c9d1e0;
+    --text-secondary: #8b95a8;
+    --text-muted: #5a6478;
+    --blue: #4e8cff;
+    --blue-dim: rgba(78,140,255,0.12);
+    --blue-glow: rgba(78,140,255,0.25);
+    --red: #ff5c5c;
+    --red-dim: rgba(255,92,92,0.1);
+    --amber: #ffb84d;
+    --amber-dim: rgba(255,184,77,0.1);
+    --green: #4ade80;
+    --green-dim: rgba(74,222,128,0.1);
+    --cyan: #22d3ee;
+    --cyan-dim: rgba(34,211,238,0.1);
+    --purple: #a78bfa;
+    --border: rgba(148,163,184,0.07);
+    --border-strong: rgba(148,163,184,0.14);
+    --serif: 'Playfair Display', Georgia, serif;
+    --sans: 'Source Sans 3', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --radius: 10px;
+    --content-width: 880px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg-base);
+    color: var(--text-primary);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(78,140,255,0.2); border-radius: 4px; }
+
+  /* === HEADER BAR === */
+  .header-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(6,9,15,0.8);
+    backdrop-filter: blur(24px) saturate(1.4);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 clamp(16px, 4vw, 48px); height: 52px;
+  }
+  .header-tag {
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .header-classified {
+    font-family: var(--mono); font-size: 9px; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--red); background: var(--red-dim);
+    padding: 3px 10px; border-radius: 4px;
+  }
+
+  /* === WRAPPER === */
+  .wrapper {
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: 0 clamp(16px, 4vw, 48px);
+  }
+
+  /* === HERO === */
+  .hero {
+    padding: 72px 0 56px;
+    position: relative;
+  }
+  .hero::after {
+    content: '';
+    position: absolute; top: 0; left: -200px; right: -200px; bottom: -100px;
+    background:
+      radial-gradient(ellipse 600px 400px at 20% 30%, rgba(78,140,255,0.06), transparent),
+      radial-gradient(ellipse 500px 350px at 80% 70%, rgba(255,92,92,0.04), transparent);
+    pointer-events: none; z-index: -1;
+  }
+  .hero-eyebrow {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--blue); margin-bottom: 24px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .hero-eyebrow::before {
+    content: ''; width: 28px; height: 1px; background: var(--blue);
+  }
+  .hero h1 {
+    font-family: var(--serif); font-size: clamp(32px, 5vw, 48px);
+    font-weight: 700; line-height: 1.15;
+    color: var(--text-bright); margin-bottom: 24px;
+    letter-spacing: -0.01em;
+  }
+  .hero-desc {
+    font-size: 17px; font-weight: 300; color: var(--text-secondary);
+    max-width: 680px; line-height: 1.8; margin-bottom: 40px;
+  }
+
+  /* === METRICS ROW === */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px; background: var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    margin-bottom: 56px;
+  }
+  .metric {
+    background: var(--bg-raised); padding: 22px 20px;
+    transition: background 0.25s;
+  }
+  .metric:hover { background: var(--bg-surface); }
+  .metric-label {
+    font-family: var(--mono); font-size: 9.5px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 10px;
+  }
+  .metric-val {
+    font-family: var(--serif); font-size: 30px; font-weight: 600;
+    letter-spacing: -0.02em; margin-bottom: 4px;
+  }
+  .metric-val.c-red { color: var(--red); }
+  .metric-val.c-amber { color: var(--amber); }
+  .metric-val.c-blue { color: var(--blue); }
+  .metric-val.c-cyan { color: var(--cyan); }
+  .metric-sub { font-size: 12px; color: var(--text-muted); }
+
+  /* === SECTION === */
+  .section {
+    margin-bottom: 72px; scroll-margin-top: 72px;
+    opacity: 0; transform: translateY(28px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+  .section.visible { opacity: 1; transform: translateY(0); }
+
+  .section-head {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 24px; padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-icon {
+    width: 38px; height: 38px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 14px; font-weight: 700;
+  }
+  .section-icon.blue { background: var(--blue-dim); color: var(--blue); }
+  .section-icon.red { background: var(--red-dim); color: var(--red); }
+  .section-icon.amber { background: var(--amber-dim); color: var(--amber); }
+  .section-icon.green { background: var(--green-dim); color: var(--green); }
+  .section-icon.cyan { background: var(--cyan-dim); color: var(--cyan); }
+  .section-icon.purple { background: rgba(167,139,250,0.1); color: var(--purple); }
+
+  .section h2 {
+    font-family: var(--serif); font-size: 26px; font-weight: 600;
+    color: var(--text-bright); letter-spacing: -0.01em;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 5px; margin-bottom: 18px;
+  }
+  .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+  .badge.endorsed { background: var(--green-dim); color: var(--green); }
+  .badge.endorsed::before { background: var(--green); }
+  .badge.adjusted { background: var(--amber-dim); color: var(--amber); }
+  .badge.adjusted::before { background: var(--amber); }
+  .badge.new-section { background: var(--red-dim); color: var(--red); }
+  .badge.new-section::before { background: var(--red); }
+
+  .section p { font-size: 15px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.85; }
+  .section p strong { color: var(--text-bright); font-weight: 600; }
+
+  .section h3 {
+    font-family: var(--sans); font-size: 17px; font-weight: 700;
+    color: var(--text-bright); margin: 32px 0 14px;
+    letter-spacing: -0.01em;
+  }
+
+  /* === CHART PANEL === */
+  .chart-panel {
+    background: var(--bg-raised); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px 28px;
+    margin: 28px 0; position: relative; overflow: hidden;
+  }
+  .chart-panel::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 2px; background: linear-gradient(90deg, var(--blue), transparent 70%);
+  }
+  .chart-label {
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 18px;
+  }
+  .chart-panel canvas { max-height: 360px; }
+
+  /* === TABLE === */
+  .tbl-wrap {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; margin: 24px 0;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--bg-surface);
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted); text-align: left;
+    padding: 11px 14px; border-bottom: 1px solid var(--border-strong);
+  }
+  tbody td {
+    padding: 11px 14px; font-size: 13px; color: var(--text-secondary);
+    border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.65;
+  }
+  tbody td strong { color: var(--text-bright); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(78,140,255,0.03); }
+  .tag {
+    display: inline-block; padding: 2px 9px; border-radius: 4px;
+    font-family: var(--mono); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .tag.no { background: var(--red-dim); color: var(--red); }
+  .tag.partial { background: var(--amber-dim); color: var(--amber); }
+
+  /* === CALLOUT === */
+  .callout {
+    background: var(--bg-surface); border-left: 3px solid var(--blue);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 20px 24px; margin: 24px 0;
+    font-size: 14px; color: var(--text-secondary); line-height: 1.85;
+  }
+  .callout.red { border-left-color: var(--red); }
+  .callout.amber { border-left-color: var(--amber); }
+  .callout.green { border-left-color: var(--green); }
+  .callout strong { color: var(--text-bright); }
+
+  /* === TIMELINE STRIP === */
+  .timeline-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+    border-radius: var(--radius); overflow: hidden; margin: 28px 0;
+  }
+  .tl-phase {
+    padding: 20px 14px; text-align: center;
+    transition: background 0.2s;
+  }
+  .tl-phase:hover { filter: brightness(1.15); }
+  .tl-phase:nth-child(1) { background: rgba(78,140,255,0.08); }
+  .tl-phase:nth-child(2) { background: rgba(34,211,238,0.08); }
+  .tl-phase:nth-child(3) { background: rgba(255,184,77,0.08); }
+  .tl-phase:nth-child(4) { background: rgba(255,92,92,0.08); }
+  .tl-name {
+    font-family: var(--mono); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .tl-phase:nth-child(1) .tl-name { color: var(--blue); }
+  .tl-phase:nth-child(2) .tl-name { color: var(--cyan); }
+  .tl-phase:nth-child(3) .tl-name { color: var(--amber); }
+  .tl-phase:nth-child(4) .tl-name { color: var(--red); }
+  .tl-years {
+    font-family: var(--serif); font-size: 24px; font-weight: 600;
+    color: var(--text-bright); margin-bottom: 6px;
+  }
+  .tl-detail { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+  /* === FACTORS GRID === */
+  .factors {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 24px 0;
+  }
+  .f-card {
+    background: var(--bg-raised); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .f-card:hover { border-color: rgba(74,222,128,0.3); background: var(--bg-surface); }
+  .f-card.span { grid-column: 1 / -1; }
+  .f-num {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    color: var(--green); margin-bottom: 5px;
+  }
+  .f-title { font-size: 14px; font-weight: 700; color: var(--text-bright); margin-bottom: 5px; }
+  .f-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+  /* === BOTTOM LINE === */
+  .bottom-line {
+    position: relative;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px; padding: 36px 32px; margin: 48px 0;
+    overflow: hidden;
+  }
+  .bottom-line::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 10% 50%, rgba(78,140,255,0.06), transparent 50%),
+      radial-gradient(ellipse at 90% 50%, rgba(255,92,92,0.04), transparent 50%);
+    pointer-events: none;
+  }
+  .bl-tag {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--blue); margin-bottom: 18px; position: relative;
+  }
+  .bottom-line p { font-size: 15px; color: var(--text-secondary); line-height: 1.9; position: relative; }
+  .bottom-line strong { color: var(--text-bright); }
+
+  /* === SOURCES === */
+  .sources {
+    border-top: 1px solid var(--border); padding-top: 32px;
+    margin-top: 48px; margin-bottom: 64px;
+  }
+  .sources h4 {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 10px;
+  }
+  .sources p { font-size: 12px; color: var(--text-muted); line-height: 1.75; }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 680px) {
+    .metrics { grid-template-columns: 1fr 1fr; }
+    .timeline-strip { grid-template-columns: 1fr 1fr; }
+    .factors { grid-template-columns: 1fr; }
+    .f-card.span { grid-column: auto; }
+    .hero h1 { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header-bar">
+  <span class="header-tag">Revised Assessment &middot; 26 Mar 2026</span>
+  <span class="header-classified">Analytical &mdash; Not for Distribution</span>
+</div>
+
+<div class="wrapper">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Day 26 &middot; Operation Epic Fury</div>
+  <h1>The Plateau, the Bomb, and&nbsp;the Existential Calculus</h1>
+  <p class="hero-desc">This revised assessment endorses the original&rsquo;s plateau and nuclear-taboo findings, while adjusting the nuclear timeline to 5&ndash;12 years, introducing IRGC factional analysis, widening Israel&rsquo;s strategic spectrum, and adding China as the critical missing variable.</p>
+</div>
+
+<!-- METRICS -->
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">Missiles / Day</div>
+    <div class="metric-val c-amber">25&ndash;40</div>
+    <div class="metric-sub">Plateaued 18 days</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Drones / Day</div>
+    <div class="metric-val c-red">60&ndash;85</div>
+    <div class="metric-sub">Rising — uptick trend</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Enriched Uranium</div>
+    <div class="metric-val c-blue">440 kg</div>
+    <div class="metric-sub">60% — near weapons-grade</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">To Weapon (Revised)</div>
+    <div class="metric-val c-red">5&ndash;12 yr</div>
+    <div class="metric-sub">Widened from original 5–8</div>
+  </div>
+</div>
+
+<!-- ====== SECTION 1 ====== -->
+<div class="section" id="s1">
+  <div class="section-head">
+    <div class="section-icon blue">01</div>
+    <h2>The Plateau: Why the Air Campaign Has Hit Its Ceiling</h2>
+  </div>
+  <div class="badge endorsed">Endorsed</div>
+
+  <p>The strongest and most empirically grounded section of the original analysis. The data-driven two-phase framework is analytically sound and consistent with every historical precedent from Serbia 1999 to the Houthi campaign. The 115:1 cost asymmetry on Shahed vs. interceptor is a real structural problem, and the drone <strong>uptick</strong> is particularly important because it suggests reconstitution capability, not just survivability.</p>
+
+  <div class="chart-panel">
+    <div class="chart-label">IRGC Launch Activity — 3-Day Moving Average (Launches / Day)</div>
+    <canvas id="chartLaunch"></canvas>
+  </div>
+
+  <p><strong>Phase 1</strong> (Feb 28 – Mar 7): Rapid degradation — missiles collapsed from ~215/day to ~40/day (81% reduction); drones from 567/day to ~40/day (93% drop). Fixed launchers, known storage, and air defense destroyed.</p>
+  <p><strong>Phase 2</strong> (Mar 7 – Mar 25): 18-day plateau — missiles stabilized at 25–42/day with zero further degradation. Drones <em>increased</em> from ~40/day to 63–93/day. Iran shifted to mobile TELs hidden in tunnels and garages. Drone production is distributed across hundreds of small workshops.</p>
+
+  <h3>&ldquo;Final Blow&rdquo; Options</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Option</th><th>Objective</th><th style="width:40%">Breaks the Plateau?</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Kharg Island</strong></td><td>Cut oil revenue; bargaining chip</td><td><span class="tag no">No</span> &ensp;Does not affect distributed TEL/drone capability; adds US vulnerability on exposed island</td></tr>
+        <tr><td><strong>Larak Island</strong></td><td>Stage minesweeping; reduce Hormuz mine threat</td><td><span class="tag partial">Partial</span> &ensp;Addresses mines but not drones/missiles from mainland batteries</td></tr>
+        <tr><td><strong>Abu Musa / Tunbs</strong></td><td>Control eastern Hormuz approaches</td><td><span class="tag partial">Partial</span> &ensp;Improves shipping lane security; Iran retains mainland positions</td></tr>
+        <tr><td><strong>Maritime interdiction</strong></td><td>Block Iran's exports symmetrically</td><td><span class="tag no">No</span> &ensp;Economic tool — zero military degradation</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Market implication:</strong> The attrition equilibrium is the scenario most underpriced by markets. If neither side can break it, the conflict becomes a frozen stalemate embedding a persistent risk premium in oil and defense names — rather than resolving into either escalation or de-escalation. Position for the grind, not a binary resolution.
+  </div>
+</div>
+
+<!-- ====== SECTION 2 ====== -->
+<div class="section" id="s2">
+  <div class="section-head">
+    <div class="section-icon amber">02</div>
+    <h2>The Bomb: Why a Nuclear Iran Is Now Probable</h2>
+  </div>
+  <div class="badge adjusted">Endorsed with Adjustments</div>
+
+  <p>The core logic — that the war has shifted Iran's internal debate toward nuclearization — is sound. The February 28 surprise attack, launched during active nuclear negotiations, has destroyed the pragmatist position permanently. However, the original's timeline is too narrow, industrial bottlenecks are understated, and the IRGC is treated as a monolith.</p>
+
+  <div class="chart-panel">
+    <div class="chart-label">The Lesson Iran Has Learned — Nuclear States vs. Non-Nuclear States</div>
+    <canvas id="chartLesson"></canvas>
+  </div>
+
+  <h3>Adjustment 1: Widened Timeline (5–12 Years)</h3>
+  <p>&ldquo;Knowledge cannot be bombed away&rdquo; is true but incomplete. Knowledge without industrial capacity and supply chains does not produce weapons. Post-war Iran faces severe economic constraints: sanctions + war damage + oil infrastructure degradation. Reconstituting centrifuge cascades requires precision manufacturing (specialized maraging steel, carbon fiber rotors, frequency converters) that will be harder to source under tightened post-war export controls.</p>
+  <p>Pakistan took <strong>over a decade</strong> from enrichment capability to a deliverable weapon, and had significant external assistance via the A.Q. Khan network. Post-war Iran will lack equivalent supply chains.</p>
+
+  <div class="timeline-strip">
+    <div class="tl-phase">
+      <div class="tl-name">Reconstitution</div>
+      <div class="tl-years">1–3 yr</div>
+      <div class="tl-detail">Rebuild centrifuges; acquire precision components under tightened controls</div>
+    </div>
+    <div class="tl-phase">
+      <div class="tl-name">Threshold</div>
+      <div class="tl-years">3–5 yr</div>
+      <div class="tl-detail">Accumulate HEU for 1–2 weapons; &ldquo;Japan model&rdquo; deniability</div>
+    </div>
+    <div class="tl-phase">
+      <div class="tl-name">Weaponization</div>
+      <div class="tl-years">4–8 yr</div>
+      <div class="tl-detail">Implosion design; warhead mating; cold testing</div>
+    </div>
+    <div class="tl-phase">
+      <div class="tl-name">Deliverable</div>
+      <div class="tl-years">5–12 yr</div>
+      <div class="tl-detail">Miniaturized warhead on solid-fuel MRBM; 3–5 weapons</div>
+    </div>
+  </div>
+
+  <h3>Adjustment 2: IRGC Factional Dynamics</h3>
+  <p>The original treats the IRGC as a unified actor. A severely degraded IRGC facing budget constraints, internal blame, and succession uncertainty around Khamenei could fracture. An equally rational lesson from the war: &ldquo;our asymmetric doctrine worked — double down on distributed conventional capability rather than concentrating targeting risk in a nuclear program.&rdquo;</p>
+
+  <div class="callout amber">
+    <strong>Revised probability:</strong> A nuclear Iran remains the most probable outcome if the IRGC retains power (60–70% over 12 years). However, IRGC factional dynamics introduce a 15–25% probability the nuclear program is deprioritized in favor of the asymmetric model that proved effective during the war.
+  </div>
+</div>
+
+<!-- ====== SECTION 3 ====== -->
+<div class="section" id="s3">
+  <div class="section-head">
+    <div class="section-icon amber">03</div>
+    <h2>The Existential Calculus: Israel's Options Are Wider</h2>
+  </div>
+  <div class="badge adjusted">Partially Endorsed</div>
+
+  <p>The original overstates the binary nature of Israel's calculus by conflating Netanyahu's coalition politics with the broader defense establishment. Israel has historically lived with ambiguity — it tolerated Pakistan's nuclear weapons, coexisted with Syria's reactor project for years before striking it, and former Mossad chiefs have publicly argued a verifiable threshold arrangement could be manageable.</p>
+
+  <div class="chart-panel">
+    <div class="chart-label">Israel's Strategic Dilemma — Desirability vs. Feasibility (Revised)</div>
+    <canvas id="chartIsrael"></canvas>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Option</th><th>Desirability</th><th>Feasibility</th><th style="width:38%">Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Regime change</strong></td><td>95%</td><td>5%</td><td>Requires ground invasion of 88M-person mountainous country; no uprising materializing</td></tr>
+        <tr><td><strong>Zero enrichment</strong></td><td>95%</td><td>10%</td><td>Netanyahu's stated position, not necessarily the defense establishment's floor</td></tr>
+        <tr><td><strong>Negotiated deal + IAEA</strong></td><td>50–60%</td><td>35%</td><td>Defense establishment has more tolerance than political leadership; JCPOA also delayed enrichment for years</td></tr>
+        <tr><td><strong>Repeated strikes</strong></td><td>60%</td><td>55%</td><td>Most likely Israeli strategy: Stuxnet/Fakhrizadeh playbook on repeat; buys time</td></tr>
+        <tr><td><strong>Accept nuclear Iran</strong></td><td>5%</td><td>15–20%</td><td>Existential gamble but not categorically impossible for future Israeli governments</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <strong>Key adjustment:</strong> The most likely trajectory is a dual-track approach: grudging acceptance of a negotiated framework <em>plus</em> sustained covert sabotage (&ldquo;mowing the grass&rdquo; applied to nuclear infrastructure). More consistent with Israeli strategic history than the original's binary framing.
+  </div>
+</div>
+
+<!-- ====== SECTION 4 ====== -->
+<div class="section" id="s4">
+  <div class="section-head">
+    <div class="section-icon green">04</div>
+    <h2>Nuclear Weapon Use: Effectively Zero</h2>
+  </div>
+  <div class="badge endorsed">Fully Endorsed</div>
+
+  <p>The probability is effectively zero under any foreseeable scenario. The seven-factor framework is overdetermined — any three factors alone would be sufficient.</p>
+
+  <div class="factors">
+    <div class="f-card">
+      <div class="f-num">#1</div>
+      <div class="f-title">No Military Need</div>
+      <div class="f-desc">US has overwhelming conventional superiority; every objective achievable without nuclear weapons.</div>
+    </div>
+    <div class="f-card">
+      <div class="f-num">#2</div>
+      <div class="f-title">Wrong Targets</div>
+      <div class="f-desc">Iran's remaining threats are distributed asymmetric capabilities — nuclear weapons are useless against dispersed targets.</div>
+    </div>
+    <div class="f-card">
+      <div class="f-num">#3</div>
+      <div class="f-title">Political Annihilation</div>
+      <div class="f-desc">Breaking the 81-year nuclear taboo would unite the world against the US. NATO fracture, ICC warrants, pariah status.</div>
+    </div>
+    <div class="f-card">
+      <div class="f-num">#4</div>
+      <div class="f-title">Israel Doctrine N/A</div>
+      <div class="f-desc">Samson Option is last-resort existential deterrent. Current war is costly but not existential (18 killed).</div>
+    </div>
+    <div class="f-card">
+      <div class="f-num">#5</div>
+      <div class="f-title">Nuclear Material Paradox</div>
+      <div class="f-desc">440kg enriched uranium at Isfahan — detonation near it risks radiological catastrophe across the region.</div>
+    </div>
+    <div class="f-card">
+      <div class="f-num">#6</div>
+      <div class="f-title">Fallout Geography</div>
+      <div class="f-desc">Bahrain (US 5th Fleet) is 200km from Iran. All GCC bases within fallout range. You cannot nuke the Gulf without contaminating your own infrastructure.</div>
+    </div>
+    <div class="f-card span">
+      <div class="f-num">#7</div>
+      <div class="f-title">Great Power Red Lines</div>
+      <div class="f-desc">China and Russia have drawn explicit lines against even conventional energy strikes. Nuclear use would trigger responses potentially including direct military intervention or nuclear posture changes.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SECTION 5 ====== -->
+<div class="section" id="s5">
+  <div class="section-head">
+    <div class="section-icon red">05</div>
+    <h2>The Missing Variable: China as Swing Actor</h2>
+  </div>
+  <div class="badge new-section">New Section</div>
+
+  <p>The original assessment's biggest analytical gap. China is Iran's largest oil buyer with significant leverage over post-war reconstruction. Beijing's calculus — whether it quietly facilitates or constrains Iran's nuclear reconstitution — may matter more than anything Israel or the US does in the 5–12 year window.</p>
+
+  <div class="chart-panel">
+    <div class="chart-label">China Scenarios — Probability vs. Impact on Nuclear Timeline</div>
+    <canvas id="chartChina"></canvas>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Scenario</th><th>Prob.</th><th>Behavior</th><th>Timeline Impact</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Quiet facilitation</strong></td><td>25–30%</td><td>Dual-use tech, reconstruction financing, IAEA/UNSC diplomatic cover</td><td>Accelerates to <strong>5–7 yr</strong></td></tr>
+        <tr><td><strong>Strategic ambiguity</strong></td><td>45–50%</td><td>Economic ties maintained; no direct nuclear assistance; abstains at UNSC</td><td>Neutral: <strong>7–10 yr</strong></td></tr>
+        <tr><td><strong>Active constraint</strong></td><td>20–25%</td><td>Joins export controls; conditions reconstruction on verifiable non-proliferation</td><td>Extends to <strong>10–12+ yr</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout red">
+    <strong>Analytical gap:</strong> Any strategic assessment of Iran's nuclear trajectory that does not model China's behavior as an independent variable is fundamentally incomplete. Beijing's post-war positioning should be the single most important intelligence collection priority for 2027–2030.
+  </div>
+</div>
+
+<!-- ====== SECTION 6 ====== -->
+<div class="section" id="s6">
+  <div class="section-head">
+    <div class="section-icon red">06</div>
+    <h2>The Counterfactual: Was the War Net-Positive?</h2>
+  </div>
+  <div class="badge new-section">New Section</div>
+
+  <p>The original's &ldquo;tragic irony&rdquo; conclusion is elegant but circular. It skips the essential counterfactual: absent the war, Iran was already at near-breakout with 440kg of 60%-enriched uranium sufficient for multiple weapons.</p>
+
+  <div class="chart-panel">
+    <div class="chart-label">War Outcome vs. No-War Counterfactual — Five Dimensions</div>
+    <canvas id="chartRadar"></canvas>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Dimension</th><th>Impact of War</th><th>No-War Counterfactual</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Physical infrastructure</strong></td><td>Centrifuge cascades destroyed; 3–5 yr material setback</td><td>Continued enrichment; possible breakout within 1–2 years</td></tr>
+        <tr><td><strong>Intent / determination</strong></td><td>Hardliner position permanently strengthened</td><td>Gradual hardliner ascendancy but with pragmatist hedging</td></tr>
+        <tr><td><strong>International monitoring</strong></td><td>Post-war IAEA access contested; new covert facilities</td><td>IAEA access deteriorating but not yet severed</td></tr>
+        <tr><td><strong>Diplomatic framework</strong></td><td>Trust for any future agreement destroyed</td><td>JCPOA-style framework theoretically revivable</td></tr>
+        <tr><td><strong>Time purchased</strong></td><td>3–5 additional years before reconstituted enrichment</td><td>Near-breakout within 1–2 years</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout amber">
+    <strong>Net assessment:</strong> Whether the war was net-positive or net-negative depends on discount rates. If you value 3–5 years of delay highly (space for regime evolution, economic pressure, technological countermeasures), the war was net-positive despite hardened intent. If hardened intent is the dominant variable, the war was net-negative. Both positions are analytically defensible; the original assumes the latter without engaging with the former.
+  </div>
+</div>
+
+<!-- ====== SECTION 7 ====== -->
+<div class="section" id="s7">
+  <div class="section-head">
+    <div class="section-icon purple">07</div>
+    <h2>Revised Conclusion</h2>
+  </div>
+
+  <p><strong>First,</strong> the plateau is real and structurally irreversible with current tools. This finding should be treated as established.</p>
+  <p><strong>Second,</strong> a nuclear Iran remains the most probable trajectory if the IRGC retains power, but the timeline is wider (5–12 years) and the pathway less certain. Industrial bottlenecks, IRGC factional dynamics, and China's behavior introduce meaningful variance.</p>
+  <p><strong>Third,</strong> Israel's strategic options are wider than the binary framing suggests. The most likely trajectory is a dual-track approach: negotiated framework plus sustained covert operations against nuclear infrastructure.</p>
+  <p><strong>Fourth,</strong> nuclear escalation in the current conflict is effectively impossible. The seven-factor framework is overdetermined.</p>
+  <p><strong>Fifth,</strong> the &ldquo;tragic irony&rdquo; narrative is analytically incomplete. The war purchased 3–5 years of material delay. Whether that delay is worth the hardened intent it produced is a legitimate strategic debate, not a settled conclusion.</p>
+
+  <div class="bottom-line">
+    <div class="bl-tag">Bottom Line</div>
+    <p><strong>Trump</strong> wants oil prices down. <strong>Iran</strong> wants regime survival. <strong>Israel</strong> wants permanent nuclear elimination. The launch plateau shows military tools cannot deliver what Israel needs. Diplomatic tools face a trust deficit the war itself created. The <strong>April forcing function</strong> is real: oil price pressure will compel Trump to choose between his ally's existential concern and his own political survival. But the outcome space is wider than the original report's deterministic framing suggests. The critical variable the original omits — <strong>China's post-war positioning</strong> — may ultimately determine whether the next decade produces a nuclear Iran or a contained one.</p>
+  </div>
+
+  <div class="sources">
+    <h4>Sources &amp; Methodology</h4>
+    <p>Original launch data: Allied Tracking compiled by Dmitri Alperovitch (@DAlperovitch) using IDF and GCC MoD figures. Additional sources: Axios, CNN, CNBC, NPR, Al Jazeera, Times of Israel, Critical Threats/AEI, Washington Institute, Fortune, DIA unclassified assessment (2025), CSIS missile threat database. Nuclear timeline projections incorporate industrial capacity constraints, historical proliferation timelines (Pakistan, North Korea, South Africa), and post-war economic scenario modeling. China analysis informed by CSIS, Brookings, and Carnegie Endowment assessments of Sino-Iranian relations.</p>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===== CHART DEFAULTS =====
+Chart.defaults.color = '#8b95a8';
+Chart.defaults.borderColor = 'rgba(148,163,184,0.06)';
+Chart.defaults.font.family = "'Source Sans 3', sans-serif";
+Chart.defaults.font.size = 12;
+
+const gridColor = 'rgba(148,163,184,0.05)';
+const legendCfg = { position:'top', labels:{ usePointStyle:true, pointStyle:'circle', padding:18, font:{size:12} }};
+
+// ===== 1. LAUNCH CHART =====
+const dates = ['Feb28','Mar1','Mar2','Mar3','Mar4','Mar5','Mar6','Mar7','Mar8','Mar9','Mar10','Mar11','Mar12','Mar13','Mar14','Mar15','Mar16','Mar17','Mar18','Mar19','Mar20','Mar21','Mar22','Mar23','Mar24','Mar25'];
+const missiles = [215,180,140,110,80,60,48,40,38,35,36,33,35,30,32,28,34,30,32,35,28,30,33,32,30,32];
+const drones   = [567,450,300,180,100,60,45,40,42,45,48,50,52,55,50,53,58,55,60,63,65,68,72,78,80,85];
+
+new Chart(document.getElementById('chartLaunch'), {
+  type:'line',
+  data:{
+    labels: dates,
+    datasets:[
+      { label:'Missiles (3-day avg)', data:missiles, borderColor:'#4e8cff', backgroundColor:'rgba(78,140,255,0.06)', fill:true, tension:0.35, pointRadius:2, pointHoverRadius:5, borderWidth:2 },
+      { label:'Drones (3-day avg)',   data:drones,   borderColor:'#ff5c5c', backgroundColor:'rgba(255,92,92,0.06)',  fill:true, tension:0.35, pointRadius:2, pointHoverRadius:5, borderWidth:2 }
+    ]
+  },
+  options:{
+    responsive:true, interaction:{intersect:false, mode:'index'},
+    plugins:{ legend:legendCfg },
+    scales:{
+      y:{ title:{display:true, text:'Launches / Day'}, grid:{color:gridColor} },
+      x:{ grid:{display:false}, ticks:{maxRotation:45, font:{size:10}} }
+    }
+  }
+});
+
+// ===== 2. LESSON CHART =====
+new Chart(document.getElementById('chartLesson'), {
+  type:'bar',
+  data:{
+    labels:['N. Korea (nuclear)','Pakistan (nuclear)','India (nuclear)','China (nuclear)','Iran (negotiating)','Iraq (falsely accused)','Libya (gave up program)'],
+    datasets:[{
+      data:[0,0,0,0,1,1,1],
+      backgroundColor: ctx => ctx.raw===1 ? '#ff5c5c' : '#4ade80',
+      borderRadius:4, barThickness:24
+    }]
+  },
+  options:{
+    indexAxis:'y', responsive:true,
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx => ctx.raw===1?'Attacked / Overthrown':'Never attacked' }}},
+    scales:{ x:{display:false, max:1.3}, y:{grid:{display:false}} }
+  }
+});
+
+// ===== 3. ISRAEL CHART =====
+new Chart(document.getElementById('chartIsrael'), {
+  type:'bar',
+  data:{
+    labels:['Regime\nchange','Zero\nenrichment','Negotiated\ndeal + IAEA','Repeated\nstrikes','Accept\nnuclear Iran'],
+    datasets:[
+      { label:'Desirability', data:[95,95,55,60,5],  backgroundColor:'rgba(78,140,255,0.65)', borderRadius:4, barPercentage:0.65 },
+      { label:'Feasibility',  data:[5,10,35,55,18],  backgroundColor:'rgba(74,222,128,0.65)', borderRadius:4, barPercentage:0.65 }
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{ legend:legendCfg },
+    scales:{
+      y:{ max:100, title:{display:true,text:'%'}, grid:{color:gridColor} },
+      x:{ grid:{display:false} }
+    }
+  }
+});
+
+// ===== 4. CHINA CHART =====
+new Chart(document.getElementById('chartChina'), {
+  type:'bar',
+  data:{
+    labels:['Quiet facilitation','Strategic ambiguity','Active constraint'],
+    datasets:[
+      { label:'Probability (%)', data:[27.5,47.5,22.5], backgroundColor:['rgba(255,92,92,0.55)','rgba(255,184,77,0.55)','rgba(74,222,128,0.55)'], borderRadius:6, barPercentage:0.45, yAxisID:'y' },
+      { label:'Midpoint timeline (yrs)', data:[6,8.5,11], type:'line', borderColor:'#22d3ee', backgroundColor:'rgba(34,211,238,0.08)', pointBackgroundColor:'#22d3ee', pointRadius:6, pointHoverRadius:8, borderWidth:2.5, tension:0.3, yAxisID:'y1' }
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{ legend:legendCfg },
+    scales:{
+      y: { position:'left', max:55, title:{display:true,text:'Probability (%)'}, grid:{color:gridColor} },
+      y1:{ position:'right', min:3, max:14, title:{display:true,text:'Years to weapon'}, grid:{drawOnChartArea:false} },
+      x: { grid:{display:false} }
+    }
+  }
+});
+
+// ===== 5. COUNTERFACTUAL RADAR =====
+new Chart(document.getElementById('chartRadar'), {
+  type:'radar',
+  data:{
+    labels:['Physical infra\ndamage','Intent\nhardening','Monitoring\naccess','Diplomatic\nframework','Time\npurchased'],
+    datasets:[
+      { label:'War outcome', data:[90,85,35,15,80], borderColor:'#4e8cff', backgroundColor:'rgba(78,140,255,0.12)', pointBackgroundColor:'#4e8cff', pointRadius:4, borderWidth:2 },
+      { label:'No-war counterfactual', data:[5,40,50,45,10], borderColor:'#ff5c5c', backgroundColor:'rgba(255,92,92,0.08)', pointBackgroundColor:'#ff5c5c', pointRadius:4, borderWidth:2 }
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{ legend:legendCfg },
+    scales:{
+      r:{ beginAtZero:true, max:100, grid:{color:'rgba(148,163,184,0.06)'}, angleLines:{color:'rgba(148,163,184,0.06)'}, pointLabels:{font:{size:11}}, ticks:{display:false} }
+    }
+  }
+});
+
+// ===== SCROLL REVEAL =====
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold:0.08 });
+document.querySelectorAll('.section').forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
