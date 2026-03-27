@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>US Chem/Ag Hormuz Disruption — Investment Thesis Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@400;600&family=Newsreader:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f7f4;
+  --surface: #ffffff;
+  --surface2: #f1efe9;
+  --border: #e2dfd6;
+  --border-accent: #ccc8bc;
+  --text: #1a1a1a;
+  --text-dim: #4a4a4a;
+  --text-muted: #7a7a7a;
+  --accent: #b8860b;
+  --accent2: #2563a0;
+  --red: #c0392b;
+  --red-dim: #fde8e5;
+  --green: #1a7a3a;
+  --green-dim: #e6f4eb;
+  --cyan: #0e7c8c;
+  --orange: #c46210;
+  --purple: #6d4fa0;
+  --serif: 'DM Serif Display', Georgia, serif;
+  --body: 'Newsreader', Georgia, serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--accent); color: #fff; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 3px; }
+
+/* Header */
+.hero {
+  position: relative;
+  padding: 60px 40px 50px;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: 
+    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(184,134,11,0.06), transparent),
+    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(37,99,160,0.04), transparent);
+  pointer-events: none;
+}
+.hero-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.15;
+  max-width: 800px;
+}
+.hero-meta {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+.hero-meta span { display: flex; align-items: center; gap: 6px; }
+.hero-meta .live {
+  display: inline-block;
+  width: 7px; height: 7px;
+  background: var(--red);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(192,57,43,0.5); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(192,57,43,0); }
+}
+
+/* Thesis Bar */
+.thesis-bar {
+  background: linear-gradient(90deg, rgba(184,134,11,0.07), rgba(37,99,160,0.05));
+  border-bottom: 1px solid var(--border);
+  padding: 16px 40px;
+  font-family: var(--body);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--accent);
+  letter-spacing: 0.2px;
+}
+
+/* Ticker Strip */
+.ticker-strip {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  background: var(--surface);
+}
+.ticker-strip::-webkit-scrollbar { height: 0; }
+.tick {
+  flex: 1;
+  min-width: 140px;
+  padding: 14px 20px;
+  border-right: 1px solid var(--border);
+  font-family: var(--mono);
+}
+.tick:last-child { border-right: none; }
+.tick-label { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+.tick-val { font-size: 20px; font-weight: 600; margin-top: 2px; }
+.tick-chg { font-size: 11px; margin-top: 2px; }
+.tick-chg.up { color: var(--green); }
+.tick-chg.down { color: var(--red); }
+
+/* Navigation */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(248,247,244,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+nav a {
+  display: block;
+  padding: 12px 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+nav a:hover, nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Layout */
+.container { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
+section { padding: 50px 0; border-bottom: 1px solid var(--border); }
+section:last-child { border-bottom: none; }
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+h2 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 400;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+h3 {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 400;
+  margin: 28px 0 12px;
+  color: var(--text);
+}
+p { margin-bottom: 14px; color: var(--text-dim); max-width: 780px; }
+p strong { color: var(--text); font-weight: 600; }
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 900px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .container { padding: 0 20px; }
+  .hero, .thesis-bar, nav { padding-left: 20px; padding-right: 20px; }
+}
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.card:hover::before { opacity: 1; }
+.card-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.card-big {
+  font-size: 32px;
+  font-family: var(--mono);
+  font-weight: 600;
+}
+
+/* Chart containers */
+.chart-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.chart-wrap h4 {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+canvas { width: 100% !important; }
+
+/* Tables */
+.tbl-wrap {
+  overflow-x: auto;
+  margin: 20px 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+thead th {
+  background: var(--surface2);
+  color: var(--accent);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--accent);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+tbody tr:hover td { background: rgba(184,134,11,0.05); color: var(--text); }
+.val-up { color: var(--green); font-weight: 600; }
+.val-down { color: var(--red); font-weight: 600; }
+.val-accent { color: var(--accent); font-weight: 600; }
+
+/* Conviction chips */
+.conviction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+.conviction.high { background: var(--green-dim); color: var(--green); }
+.conviction.med { background: rgba(184,134,11,0.12); color: var(--accent); }
+.conviction.low { background: rgba(122,122,122,0.1); color: var(--text-muted); }
+
+/* Timeline */
+.timeline { position: relative; padding-left: 28px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--border-accent);
+}
+.tl-item {
+  position: relative;
+  margin-bottom: 20px;
+  padding-left: 24px;
+}
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -24px; top: 6px;
+  width: 10px; height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+}
+.tl-date {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+.tl-text { color: var(--text-dim); font-size: 14px; margin-top: 4px; }
+
+/* Risk bars */
+.risk-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.risk-bar .label {
+  flex: 0 0 200px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.risk-bar .bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.risk-bar .bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease-out;
+}
+.risk-bar .bar-fill.red { background: linear-gradient(90deg, var(--red), var(--orange)); }
+.risk-bar .bar-fill.amber { background: linear-gradient(90deg, var(--accent), var(--orange)); }
+.risk-bar .bar-fill.blue { background: linear-gradient(90deg, var(--accent2), var(--cyan)); }
+.risk-bar .pct {
+  flex: 0 0 40px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+/* Scenario cards */
+.scenario {
+  border-left: 3px solid;
+  padding: 16px 20px;
+  background: var(--surface);
+  border-radius: 0 8px 8px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.scenario.bear { border-color: var(--green); }
+.scenario.base { border-color: var(--accent); }
+.scenario.bull { border-color: var(--red); }
+.scenario-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.scenario.bear .scenario-title { color: var(--green); }
+.scenario.base .scenario-title { color: var(--accent); }
+.scenario.bull .scenario-title { color: var(--red); }
+
+/* Fade-in animation */
+.fade-in {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+
+/* Footer */
+footer {
+  padding: 40px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.8;
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-label">Investment Research Report</div>
+  <h1>US Chemical & Agricultural Sector:<br>Hormuz Disruption Thesis</h1>
+  <div class="hero-meta">
+    <span><span class="live"></span> Day 27 of Closure</span>
+    <span>March 27, 2026</span>
+    <span>Horizon: Tactical + Structural</span>
+    <span>Coverage: CF · LYB · DOW · CTVA · WLK</span>
+  </div>
+</header>
+
+<!-- THESIS -->
+<div class="thesis-bar">
+  "US chem/ag producers benefit from stable domestic energy costs while global end-product prices spike due to Hormuz closure — a once-in-a-cycle margin expansion window."
+</div>
+
+<!-- TICKER STRIP -->
+<div class="ticker-strip">
+  <div class="tick"><div class="tick-label">Brent Crude</div><div class="tick-val">$108.01</div><div class="tick-chg up">+48% since Feb 28</div></div>
+  <div class="tick"><div class="tick-label">WTI Crude</div><div class="tick-val">$94.48</div><div class="tick-chg up">+49%</div></div>
+  <div class="tick"><div class="tick-label">Henry Hub Gas</div><div class="tick-val">$2.90</div><div class="tick-chg" style="color:var(--text-muted)">~0% (insulated)</div></div>
+  <div class="tick"><div class="tick-label">NOLA Urea</div><div class="tick-val">$683</div><div class="tick-chg up">+43%</div></div>
+  <div class="tick"><div class="tick-label">TTF Gas (EU)</div><div class="tick-val">~$17</div><div class="tick-chg up">+53%</div></div>
+  <div class="tick"><div class="tick-label">Naphtha Margin</div><div class="tick-val">$400/t</div><div class="tick-chg up">+270% over Brent</div></div>
+  <div class="tick"><div class="tick-label">Hormuz Ships/Day</div><div class="tick-val"><6</div><div class="tick-chg down">−95% (was 130)</div></div>
+  <div class="tick"><div class="tick-label">VIX</div><div class="tick-val">27.44</div><div class="tick-chg up">+41%</div></div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#conflict" class="active">Conflict</a>
+  <a href="#supplychain">Supply Chain</a>
+  <a href="#pricing">Pricing</a>
+  <a href="#stocks">Equities</a>
+  <a href="#conviction">Conviction</a>
+  <a href="#scenarios">Scenarios</a>
+  <a href="#analog">Analogs</a>
+  <a href="#risks">Risks</a>
+  <a href="#catalysts">Catalysts</a>
+</nav>
+
+<div class="container">
+
+<!-- SECTION: CONFLICT STATUS -->
+<section id="conflict">
+  <div class="section-label fade-in">Part I</div>
+  <h2 class="fade-in">Conflict Situation Assessment</h2>
+  <div class="grid-2 fade-in">
+    <div>
+      <p><strong>Feb 28:</strong> US-Israel launched Operation Epic Fury — coordinated strikes on Iranian military, nuclear sites, and leadership. Supreme Leader Khamenei killed.</p>
+      <p><strong>Mar 2:</strong> IRGC confirmed Strait of Hormuz closed to all foreign shipping. Insurance removed, tanker traffic dropped 95%.</p>
+      <p><strong>Mar 19:</strong> US began aerial campaign to reopen the strait. GBU-72 penetrator munitions deployed against Iranian coastal positions.</p>
+      <p><strong>Mar 26:</strong> Israel killed Iran's top naval commander Tangsiri. Iran rejected direct US talks. Trump extended energy-strike deadline to April 6.</p>
+      <p><strong>Key dynamic:</strong> Closure achieved not by naval blockade but by cheap drones + insurance collapse. DIA assessment: 1–6 months potential closure. 22-nation coalition signed statement on securing Hormuz.</p>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-label">Hormuz Daily Transit</div>
+        <div class="card-big" style="color:var(--red)"><6 ships</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-top:4px">Pre-war: ~130 ships/day</div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-label">Supply Stranded</div>
+        <div class="card-big" style="color:var(--accent)">~15.8M bpd</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-top:4px">Largest disruption in oil market history</div>
+      </div>
+      <div class="card">
+        <div class="card-label">IEA SPR Release</div>
+        <div class="card-big" style="color:var(--cyan)">400M bbl</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-top:4px">Largest coordinated release in IEA history</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: SUPPLY CHAIN -->
+<section id="supplychain">
+  <div class="section-label fade-in">Part II</div>
+  <h2 class="fade-in">Supply Chain Disruption Map</h2>
+  <div class="grid-3 fade-in">
+    <div class="card">
+      <div class="card-label">Nitrogen Fertilizers</div>
+      <h3 style="margin-top:0;color:var(--accent)">The Direct Play</h3>
+      <p style="font-size:13px">Gas → Ammonia → Urea/UAN. Revenue tied to global benchmark (NOLA urea), cost tied to Henry Hub. Spread = margin.</p>
+      <div style="font-family:var(--mono);font-size:12px;margin-top:12px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">Global urea trade disrupted</span>
+          <span class="val-up">~30%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">Ships stranded in Gulf</span>
+          <span class="val-accent">21+</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">Gulf urea exports (annual)</span>
+          <span style="color:var(--text)">22M tons</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0">
+          <span style="color:var(--text-muted)">Sulfur exports via Hormuz</span>
+          <span class="val-accent">~50%</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">Crop Protection</div>
+      <h3 style="margin-top:0;color:var(--accent2)">The Pass-Through Play</h3>
+      <p style="font-size:13px">Petrochemical intermediates → Active ingredients → Formulated products. Rising inputs offset by pricing power on proprietary products.</p>
+      <div style="font-family:var(--mono);font-size:12px;margin-top:12px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">EU chemical surcharges</span>
+          <span class="val-up">Up to 30%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">Corteva US exposure</span>
+          <span style="color:var(--text)">High</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">Corn→Soy shift signal</span>
+          <span class="val-accent">Ratio 2.5+</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0">
+          <span style="color:var(--text-muted)">Net demand effect</span>
+          <span style="color:var(--green)">Modestly +</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">Petrochemicals</div>
+      <h3 style="margin-top:0;color:var(--cyan)">The Structural Play</h3>
+      <p style="font-size:13px">US ethane crackers vs Asian/EU naphtha crackers. Oil-to-gas spread has blown wide open. 20% of Asian ethylene under force majeure.</p>
+      <div style="font-family:var(--mono);font-size:12px;margin-top:12px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">Force majeures (Asia/ME)</span>
+          <span class="val-up">31</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">Asian ethylene under FM</span>
+          <span class="val-accent">~20%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">Naphtha margin spike</span>
+          <span class="val-up">$400/t (was $108)</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0">
+          <span style="color:var(--text-muted)">Global gas/ethane feed share</span>
+          <span style="color:var(--text)">45% → 52-55%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: PRICING CHARTS -->
+<section id="pricing">
+  <div class="section-label fade-in">Part III</div>
+  <h2 class="fade-in">Commodity Pricing & Spreads</h2>
+  <div class="grid-2 fade-in">
+    <div class="chart-wrap">
+      <h4>Oil Price Trajectory (2026)</h4>
+      <canvas id="chartOil" height="220"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h4>Natural Gas: US vs Europe vs Asia</h4>
+      <canvas id="chartGas" height="220"></canvas>
+    </div>
+  </div>
+  <div class="grid-2 fade-in" style="margin-top:24px">
+    <div class="chart-wrap">
+      <h4>Urea Price Trajectory ($/mt)</h4>
+      <canvas id="chartUrea" height="220"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h4>Fertilizer Price Changes Since Feb 28</h4>
+      <canvas id="chartFert" height="220"></canvas>
+    </div>
+  </div>
+
+  <h3 class="fade-in" style="margin-top:32px">Key Pricing Dashboard</h3>
+  <div class="tbl-wrap fade-in">
+    <table>
+      <thead>
+        <tr><th>Indicator</th><th>Current</th><th>Pre-War (Feb 27)</th><th>Change</th><th>2022 Peak (Ref)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Brent Crude ($/bbl)</td><td>$108.01</td><td>$72.87</td><td class="val-up">+48%</td><td>$139</td></tr>
+        <tr><td>WTI Crude ($/bbl)</td><td>$94.48</td><td>$63.60</td><td class="val-up">+49%</td><td>$123</td></tr>
+        <tr><td>Henry Hub Gas ($/MMBtu)</td><td>$2.90</td><td>$2.90</td><td style="color:var(--text-muted)">~0%</td><td>$9.68</td></tr>
+        <tr><td>TTF European Gas</td><td>~$17/MMBtu</td><td>$11.10</td><td class="val-up">+53%</td><td>$100</td></tr>
+        <tr><td>JKM Asian LNG</td><td>~$19/MMBtu</td><td>~$12</td><td class="val-up">+58%</td><td>$84</td></tr>
+        <tr><td>NOLA Urea ($/mt)</td><td>$683+</td><td>$475–516</td><td class="val-up">+32–43%</td><td>~$900</td></tr>
+        <tr><td>FOB Egypt Urea</td><td>~$700</td><td>$400–490</td><td class="val-up">+43–75%</td><td>$1,000+</td></tr>
+        <tr><td>Naphtha Margin / Brent</td><td>$400/ton</td><td>$108/ton</td><td class="val-up">+270%</td><td>—</td></tr>
+        <tr><td>DAP/MAP ($/mt)</td><td>$700+</td><td>~$550</td><td class="val-up">+27%</td><td>$1,000+</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SECTION: EQUITIES -->
+<section id="stocks">
+  <div class="section-label fade-in">Part IV</div>
+  <h2 class="fade-in">Equity Performance & Coverage Universe</h2>
+  <div class="grid-2 fade-in">
+    <div class="chart-wrap">
+      <h4>YTD Stock Performance (%)</h4>
+      <canvas id="chartStocks" height="250"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h4>Price vs Analyst Consensus Target</h4>
+      <canvas id="chartValuation" height="250"></canvas>
+    </div>
+  </div>
+  <div class="tbl-wrap fade-in" style="margin-top:24px">
+    <table>
+      <thead>
+        <tr><th>Ticker</th><th>Company</th><th>Price (Mar 27)</th><th>YTD</th><th>52W Range</th><th>Analyst Target</th><th>Implied Move</th><th>Key Catalyst</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="val-accent">CF</td><td>CF Industries</td><td>$131</td><td class="val-up">+76%</td><td>$67–137</td><td>$105–110</td><td class="val-down">−16 to −20%</td><td>Purest nitrogen play; ATH</td></tr>
+        <tr><td class="val-accent">LYB</td><td>LyondellBasell</td><td>$75.20</td><td class="val-up">+74%</td><td>$42–75</td><td>$70–80</td><td style="color:var(--text-muted)">±0%</td><td>Citi double upgrade; ethane advantage</td></tr>
+        <tr><td class="val-accent">DOW</td><td>Dow Inc.</td><td>$39.47</td><td class="val-up">+47%</td><td>$27–40</td><td>$38–40</td><td style="color:var(--text-muted)">±0%</td><td>Citi upgrade to Buy; April orders strong</td></tr>
+        <tr><td class="val-accent">CTVA</td><td>Corteva</td><td>$80.99</td><td class="val-up">+16%</td><td>$59–81</td><td>$69–77</td><td class="val-down">−5 to −15%</td><td>ATH; business separation catalyst</td></tr>
+        <tr><td class="val-accent">NTR</td><td>Nutrien</td><td>~$72</td><td class="val-up">+30%</td><td>$49–72</td><td>$66–96</td><td style="color:var(--text-muted)">Mixed</td><td>Jefferies Buy upgrade at $96</td></tr>
+        <tr><td class="val-accent">WLK</td><td>Westlake</td><td>~$135</td><td class="val-up">+40%</td><td>$96–145</td><td>~$130</td><td style="color:var(--text-muted)">−5%</td><td>US PE/PVC advantage</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SECTION: CONVICTION -->
+<section id="conviction">
+  <div class="section-label fade-in">Part V</div>
+  <h2 class="fade-in">Conviction Hierarchy & Deep Dives</h2>
+  
+  <div class="fade-in" style="margin-bottom:32px">
+    <div class="card" style="border-left:3px solid var(--accent)">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div>
+          <span class="conviction high">#1 HIGHEST CONVICTION</span>
+          <h3 style="margin:8px 0 4px">CF Industries (CF) — $131</h3>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--text-muted)">World's largest ammonia producer · 40% of North American nitrogen market</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--mono);font-size:28px;font-weight:600;color:var(--green)">+76% YTD</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted)">S&P 500's top performer</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <p style="font-size:13px"><strong>Bull case:</strong> Mechanical margin expansion — revenue at global urea price ($683/mt), cost at HH ($2.90). FY2025 adjusted EBITDA of $2.89B (+27% YoY). 97% capacity utilization. Blue Point ammonia plant for structural growth. Prediction markets: only 19.5% chance of conflict resolution by Mar 31.</p>
+        </div>
+        <div>
+          <p style="font-size:13px"><strong>Bear case:</strong> Valuation stretch vs $105–110 consensus. Mizuho downgrade to Underperform. DOJ antitrust probe. Insider selling: 25 sales / 0 buys in past year (ex-CEO sold $6.27M on Mar 9). Peak-earnings multiple compression risk. Rapid de-escalation collapses premium.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2 fade-in">
+    <div class="card" style="border-left:3px solid var(--accent2)">
+      <span class="conviction med">#2 LyondellBasell (LYB)</span>
+      <h3 style="margin:8px 0 4px">$75.20 — +74% YTD</h3>
+      <p style="font-size:13px"><strong>Thesis:</strong> US ethane cracker advantage + European pivot. CFO confirmed April order books "strongest in several months." Citigroup double-upgraded. KeyBanc sees 5–10% global PE supply tightening.</p>
+      <p style="font-size:13px"><strong>Risk:</strong> European operations are a drag; LYB declared force majeure on EU polyolefin production. Recession volume risk if downstream demand buckles.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--cyan)">
+      <span class="conviction med">#3 Dow Inc. (DOW)</span>
+      <h3 style="margin:8px 0 4px">$39.47 — +47% YTD</h3>
+      <p style="font-size:13px"><strong>Thesis:</strong> Broad petchem beneficiary. CEO Fitterling: "Ethane fundamentals haven't changed, but oil fundamentals have changed dramatically." Citi upgraded to Buy at $40.</p>
+      <p style="font-size:13px"><strong>Risk:</strong> Diversification dilutes leverage. Construction/automotive weakness. Q1 earnings April 23 will be first confirmation.</p>
+    </div>
+  </div>
+  <div class="grid-2 fade-in" style="margin-top:16px">
+    <div class="card" style="border-left:3px solid var(--purple)">
+      <span class="conviction low">#4 Corteva (CTVA)</span>
+      <h3 style="margin:8px 0 4px">$80.99 — +16% YTD (ATH)</h3>
+      <p style="font-size:13px">Indirect beneficiary via ag spending cycle. Proprietary portfolio provides pricing power. Corn-to-soy shift increases herbicide demand. But UBS & JPMorgan downgraded to Neutral; less direct Hormuz leverage.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--text-muted)">
+      <span class="conviction low">#5 LSB Industries (LXU)</span>
+      <h3 style="margin:8px 0 4px">Small-Cap Nitrogen Leverage</h3>
+      <p style="font-size:13px">Higher beta exposure to nitrogen price spike. Less institutional coverage, less liquid. Small scale but pure-play thesis. Suitable for aggressive tactical positioning only.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: SCENARIOS -->
+<section id="scenarios">
+  <div class="section-label fade-in">Part VI</div>
+  <h2 class="fade-in">Scenario Analysis</h2>
+  <div class="grid-3 fade-in">
+    <div class="scenario bear">
+      <div class="scenario-title">Bear — Quick Resolution</div>
+      <p style="font-size:13px"><strong>Hormuz:</strong> Reopens April 2026<br>
+      <strong>Brent:</strong> Falls to $80–85<br>
+      <strong>Urea:</strong> Normalizes to $450–500/mt<br>
+      <strong>CF:</strong> Reverts toward $90–100<br>
+      <strong>Probability:</strong> ~20%</p>
+      <p style="font-size:12px;color:var(--text-muted)">Even in this case, Citi argues months of residual supply-driven pricing from logistics bottlenecks, insurance normalization, and unit restarts. Oil Dec futures still $79.70 (+10% above pre-war).</p>
+    </div>
+    <div class="scenario base">
+      <div class="scenario-title">Base — Q3 Partial Reopening</div>
+      <p style="font-size:13px"><strong>Hormuz:</strong> Partially restricted through Q3<br>
+      <strong>Brent:</strong> $95–110 range<br>
+      <strong>Urea:</strong> Sustains $600–750/mt<br>
+      <strong>CF:</strong> $120–140 range with Q1 earnings catalyst<br>
+      <strong>Probability:</strong> ~50%</p>
+      <p style="font-size:12px;color:var(--text-muted)">Consistent with DIA assessment, oil backwardation, and China maintaining export bans through August. Spring/summer planting season keeps nitrogen demand elevated.</p>
+    </div>
+    <div class="scenario bull">
+      <div class="scenario-title">Bull — Prolonged / Escalation</div>
+      <p style="font-size:13px"><strong>Hormuz:</strong> 2027+ closure or widening<br>
+      <strong>Brent:</strong> $120+ (Kharg seizure → higher)<br>
+      <strong>Urea:</strong> $800+ (approaching 2022 peak)<br>
+      <strong>CF:</strong> $150+ with structural re-rating<br>
+      <strong>Probability:</strong> ~30%</p>
+      <p style="font-size:12px;color:var(--text-muted)">Iran published list of 32% of regional olefin supply as retaliation targets. Houthi warned against Hormuz reopening efforts. Recession risk rises sharply at these oil levels.</p>
+    </div>
+  </div>
+
+  <h3 class="fade-in" style="margin-top:32px">China Export Policy — The Swing Variable</h3>
+  <div class="card fade-in">
+    <p style="max-width:none"><strong>Current status:</strong> Beijing banned exports of NK fertilizer blends, reiterated urea restrictions. 50–80% of China's fertilizer exports (~40M mt) now restricted. Only ammonium sulfate can still be exported. Industry sources at Shanghai conference: bans not expected to lift before August.</p>
+    <p style="max-width:none"><strong>Strategic calculus:</strong> BMI: "China restricts supplies rather than coming to the rescue during global tightness." CSIS: "China is so reluctant to do anything that would increase the price of grains, especially animal feed, domestically." India has formally requested urea export quotas from China. If China maintains restrictions through H2, the bull case for nitrogen pricing becomes significantly more probable.</p>
+  </div>
+</section>
+
+<!-- SECTION: ANALOGS -->
+<section id="analog">
+  <div class="section-label fade-in">Part VII</div>
+  <h2 class="fade-in">Historical Analog Analysis</h2>
+  <div class="tbl-wrap fade-in">
+    <table>
+      <thead>
+        <tr><th>Event</th><th>Supply Removed</th><th>Fertilizer Impact</th><th>Chemical Sector Response</th><th>Windfall Duration</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="val-accent">1973 Oil Embargo</td>
+          <td>~4.5M bpd (7%)</td>
+          <td>Moderate</td>
+          <td>Massive US margin expansion; EU rationalization began</td>
+          <td>12–18 months</td>
+        </tr>
+        <tr>
+          <td class="val-accent">2022 Russia-Ukraine</td>
+          <td>~1–2M bpd effective</td>
+          <td>Urea +40%, DAP +30%</td>
+          <td>EU gas crisis → permanent cracker shutdowns (BASF)</td>
+          <td>6–12 months</td>
+        </tr>
+        <tr>
+          <td class="val-accent">2026 Hormuz (Current)</td>
+          <td style="color:var(--red);font-weight:600">~15.8M bpd</td>
+          <td>Urea +43%, DAP +27%</td>
+          <td>31 force majeures; 20% Asian ethylene under FM</td>
+          <td>Ongoing (Day 27)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="fade-in"><strong>Key insight:</strong> The current disruption is larger in barrel terms than anything since 1973, but US domestic energy insulation is far stronger (shale revolution). This creates the most favorable setup for US-based producers in modern history: global prices spike while US costs remain flat. In 2022, CF rallied ~80% over 3 months; in 2026, it's done +76% in 27 days — the trade is compressing the analog timeline.</p>
+</section>
+
+<!-- SECTION: RISKS -->
+<section id="risks">
+  <div class="section-label fade-in">Part VIII</div>
+  <h2 class="fade-in">Risk Factor Analysis</h2>
+  <div class="fade-in" style="margin-bottom:24px">
+    <div class="risk-bar"><div class="label">Recession / Demand Destruction</div><div class="bar-track"><div class="bar-fill red" style="width:72%"></div></div><div class="pct">72%</div></div>
+    <div class="risk-bar"><div class="label">Rapid De-escalation</div><div class="bar-track"><div class="bar-fill amber" style="width:45%"></div></div><div class="pct">45%</div></div>
+    <div class="risk-bar"><div class="label">China Lifts Export Bans</div><div class="bar-track"><div class="bar-fill amber" style="width:25%"></div></div><div class="pct">25%</div></div>
+    <div class="risk-bar"><div class="label">US Export Controls on Chemicals</div><div class="bar-track"><div class="bar-fill blue" style="width:35%"></div></div><div class="pct">35%</div></div>
+    <div class="risk-bar"><div class="label">Conflict Escalation (Kharg / Saudi)</div><div class="bar-track"><div class="bar-fill red" style="width:55%"></div></div><div class="pct">55%</div></div>
+    <div class="risk-bar"><div class="label">Peak-Earnings Multiple Compression</div><div class="bar-track"><div class="bar-fill amber" style="width:80%"></div></div><div class="pct">80%</div></div>
+  </div>
+  <p class="fade-in" style="max-width:none"><strong>Dallas Fed model:</strong> Hormuz closure → WTI $98, global GDP −2.9% annualized in Q2. Every oil shock >100% magnitude has preceded recession within 12 months. For chemical stocks, volume declines can more than offset margin expansion if recession is severe — this is the primary bear case for DOW/LYB. CF is more insulated because its volumes are agricultural (inelastic demand) rather than industrial.</p>
+  <p class="fade-in" style="max-width:none"><strong>Geopolitical tail risks:</strong> Iran published a list of ME petrochemical facilities covering ~32% of regional olefin supply, 42% of PE capacity, 40% of PP capacity as potential retaliation targets. Houthis warned against efforts to reopen Hormuz. Physical crude in Asia trading at $40 premium over paper — "without precedent" per Vanda Insights.</p>
+</section>
+
+<!-- SECTION: CATALYSTS -->
+<section id="catalysts">
+  <div class="section-label fade-in">Part IX</div>
+  <h2 class="fade-in">Key Dates & Catalyst Calendar</h2>
+  <div class="grid-2 fade-in">
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-date">MAR 31</div><div class="tl-text"><strong>USDA Prospective Plantings</strong> — Corn/soy acreage shift; nitrogen demand signal. Fertilizer cost shock expected to amplify corn→soy rotation.</div></div>
+      <div class="tl-item"><div class="tl-date">APR 6</div><div class="tl-text"><strong>Trump energy-strike deadline</strong> — Escalation or de-escalation catalyst for oil/gas. Iran rejected direct talks; counter-conditions include Hormuz sovereignty.</div></div>
+      <div class="tl-item"><div class="tl-date">APR 7</div><div class="tl-text"><strong>EIA STEO release</strong> — Updated oil price and production forecasts post-conflict reassessment.</div></div>
+      <div class="tl-item"><div class="tl-date">APR 9</div><div class="tl-text"><strong>WASDE report</strong> — Global grain supply/demand; fertilizer demand context for new crop year.</div></div>
+      <div class="tl-item"><div class="tl-date">APR 23</div><div class="tl-text"><strong>Dow Q1 2026 earnings</strong> — First major chemical company to report during crisis. Ethane advantage confirmation.</div></div>
+      <div class="tl-item"><div class="tl-date">MAY 6</div><div class="tl-text"><strong>CF Industries Q1 2026 earnings</strong> — Windfall margin confirmation. Forward guidance critical for duration thesis.</div></div>
+    </div>
+    <div>
+      <h3>Tactical Unwind Triggers</h3>
+      <p style="font-size:13px">Watch for these to exit war-duration positions: Hormuz transit >30 ships/day; ceasefire announcement; China lifting urea restrictions; Brent below $85; VIX reverting below 20.</p>
+      <h3>Structural Re-Rating Triggers</h3>
+      <p style="font-size:13px">Watch for these to build longer-term positions: European permanent cracker shutdowns; long-term supply contracts shifting to US producers; US expansion announcements; gas/ethane feedstock share exceeding 50% globally.</p>
+      <h3 style="margin-top:24px">TradingView / Pine Script Opportunities</h3>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);line-height:2">
+        Spread chart: CF stock vs Henry Hub (margin proxy)<br>
+        Spread chart: Ethane (Mont Belvieu) vs Naphtha (SGP)<br>
+        Ratio chart: CF/XLB or CF/SPY — relative perf<br>
+        Alert: HH breakout > $4 (risk to thesis)<br>
+        Alert: WTI break < $80 (war premium fading)
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  Confidential — For Investment Research Purposes Only<br>
+  Sources: Dallas Fed, EIA, CNBC, Bloomberg, NPR, Reuters, CRU, ICIS, farmdoc daily, S&P Global, Argus Media, LSEG<br>
+  Last updated: March 27, 2026 · Not investment advice
+</footer>
+
+<script>
+// Chart defaults
+Chart.defaults.color = '#7a7a7a';
+Chart.defaults.borderColor = '#e2dfd6';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 11;
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+Chart.defaults.plugins.legend.labels.padding = 16;
+
+// Oil Price Chart
+new Chart(document.getElementById('chartOil'), {
+  type: 'line',
+  data: {
+    labels: ['Jan 1','Jan 15','Feb 1','Feb 15','Feb 27','Mar 3','Mar 9','Mar 13','Mar 20','Mar 27'],
+    datasets: [{
+      label: 'Brent',
+      data: [82.8, 84, 86, 88, 72.87, 96, 94, 119.5, 108, 108],
+      borderColor: '#b8860b',
+      backgroundColor: 'rgba(184,134,11,0.08)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 3,
+      borderWidth: 2,
+    },{
+      label: 'WTI',
+      data: [78.5, 80, 82, 84, 63.6, 86, 90, 98.3, 93, 94.5],
+      borderColor: '#2563a0',
+      backgroundColor: 'rgba(37,99,160,0.06)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 3,
+      borderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      annotation: {},
+      tooltip: { mode: 'index', intersect: false },
+    },
+    scales: {
+      y: { 
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => '$' + v }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Gas Price Chart
+new Chart(document.getElementById('chartGas'), {
+  type: 'bar',
+  data: {
+    labels: ['Henry Hub (US)', 'TTF (Europe)', 'JKM (Asia)'],
+    datasets: [{
+      label: 'Pre-War (Feb 27)',
+      data: [2.9, 11.1, 12],
+      backgroundColor: 'rgba(122,122,122,0.2)',
+      borderColor: '#999',
+      borderWidth: 1,
+      borderRadius: 4,
+    },{
+      label: 'Current (Mar 27)',
+      data: [2.9, 17, 19],
+      backgroundColor: ['rgba(26,122,58,0.35)', 'rgba(192,57,43,0.35)', 'rgba(192,57,43,0.35)'],
+      borderColor: ['#1a7a3a', '#c0392b', '#c0392b'],
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { 
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => '$' + v + '/MMBtu' }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Urea Price Chart
+new Chart(document.getElementById('chartUrea'), {
+  type: 'line',
+  data: {
+    labels: ['Dec 25','Jan 26','Feb 1','Feb 15','Feb 27','Mar 5','Mar 10','Mar 17','Mar 27'],
+    datasets: [{
+      label: 'NOLA Urea',
+      data: [350, 400, 430, 450, 516, 683, 650, 674, 683],
+      borderColor: '#b8860b',
+      backgroundColor: 'rgba(184,134,11,0.08)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 4,
+      borderWidth: 2.5,
+    },{
+      label: 'FOB Egypt Urea',
+      data: [340, 380, 400, 420, 482, 700, 680, 690, 700],
+      borderColor: '#0e7c8c',
+      backgroundColor: 'rgba(14,124,140,0.06)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 3,
+      borderWidth: 2,
+    },{
+      label: '2022 Peak Reference',
+      data: [900,900,900,900,900,900,900,900,900],
+      borderColor: 'rgba(192,57,43,0.35)',
+      borderDash: [6,4],
+      borderWidth: 1,
+      pointRadius: 0,
+      fill: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: {
+        min: 200,
+        max: 1000,
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => '$' + v }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Fertilizer Changes Chart
+new Chart(document.getElementById('chartFert'), {
+  type: 'bar',
+  data: {
+    labels: ['Urea (NOLA)', 'FOB Egypt Urea', 'DAP/MAP', 'UAN', 'Anhydrous NH₃', 'Potash'],
+    datasets: [{
+      label: '% Change Since Feb 28',
+      data: [43, 50, 27, 14, 7, 3],
+      backgroundColor: ctx => {
+        const v = ctx.raw;
+        if (v > 30) return 'rgba(192,57,43,0.55)';
+        if (v > 15) return 'rgba(184,134,11,0.55)';
+        return 'rgba(122,122,122,0.3)';
+      },
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => '+' + v + '%' }
+      },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// Stock Performance Chart
+new Chart(document.getElementById('chartStocks'), {
+  type: 'bar',
+  data: {
+    labels: ['CF', 'LYB', 'DOW', 'WLK', 'NTR', 'CTVA', 'S&P 500'],
+    datasets: [{
+      label: 'YTD Performance (%)',
+      data: [76, 74, 47, 40, 30, 16, -5.8],
+      backgroundColor: ctx => ctx.raw >= 0 
+        ? 'rgba(184,134,11,0.55)' 
+        : 'rgba(192,57,43,0.55)',
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: {
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => (v >= 0 ? '+' : '') + v + '%' }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Valuation Chart
+new Chart(document.getElementById('chartValuation'), {
+  type: 'bar',
+  data: {
+    labels: ['CF', 'LYB', 'DOW', 'CTVA', 'NTR'],
+    datasets: [{
+      label: 'Current Price',
+      data: [131, 75.2, 39.5, 81, 72],
+      backgroundColor: 'rgba(184,134,11,0.55)',
+      borderRadius: 4,
+    },{
+      label: 'Avg Analyst Target',
+      data: [107.5, 75, 39, 73, 81],
+      backgroundColor: 'rgba(122,122,122,0.25)',
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: {
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => '$' + v }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Scroll fade-in
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// Nav active state
+const navLinks = document.querySelectorAll('nav a');
+const sections = document.querySelectorAll('section');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>
