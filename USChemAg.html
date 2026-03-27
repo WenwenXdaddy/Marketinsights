@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>美国化工/农业霍尔木兹海峡中断 — 投资主题仪表板</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@400;600&family=Newsreader:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f7f4;
+  --surface: #ffffff;
+  --surface2: #f1efe9;
+  --border: #e2dfd6;
+  --border-accent: #ccc8bc;
+  --text: #1a1a1a;
+  --text-dim: #4a4a4a;
+  --text-muted: #7a7a7a;
+  --accent: #b8860b;
+  --accent2: #2563a0;
+  --red: #c0392b;
+  --red-dim: #fde8e5;
+  --green: #1a7a3a;
+  --green-dim: #e6f4eb;
+  --cyan: #0e7c8c;
+  --orange: #c46210;
+  --purple: #6d4fa0;
+  /* 调整字体以适配中文 */
+  --serif: 'DM Serif Display', 'Noto Serif SC', 'Songti SC', Georgia, serif;
+  --body: 'Newsreader', 'Noto Serif SC', 'Songti SC', Georgia, serif;
+  --mono: 'JetBrains Mono', 'Consolas', monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--accent); color: #fff; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 3px; }
+
+/* Header */
+.hero {
+  position: relative;
+  padding: 60px 40px 50px;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: 
+    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(184,134,11,0.06), transparent),
+    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(37,99,160,0.04), transparent);
+  pointer-events: none;
+}
+.hero-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.25;
+  max-width: 800px;
+}
+.hero-meta {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+.hero-meta span { display: flex; align-items: center; gap: 6px; }
+.hero-meta .live {
+  display: inline-block;
+  width: 7px; height: 7px;
+  background: var(--red);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(192,57,43,0.5); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(192,57,43,0); }
+}
+
+/* Thesis Bar */
+.thesis-bar {
+  background: linear-gradient(90deg, rgba(184,134,11,0.07), rgba(37,99,160,0.05));
+  border-bottom: 1px solid var(--border);
+  padding: 16px 40px;
+  font-family: var(--body);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--accent);
+  letter-spacing: 0.2px;
+}
+
+/* Ticker Strip */
+.ticker-strip {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  background: var(--surface);
+}
+.ticker-strip::-webkit-scrollbar { height: 0; }
+.tick {
+  flex: 1;
+  min-width: 140px;
+  padding: 14px 20px;
+  border-right: 1px solid var(--border);
+  font-family: var(--mono);
+}
+.tick:last-child { border-right: none; }
+.tick-label { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+.tick-val { font-size: 20px; font-weight: 600; margin-top: 2px; }
+.tick-chg { font-size: 11px; margin-top: 2px; }
+.tick-chg.up { color: var(--green); }
+.tick-chg.down { color: var(--red); }
+
+/* Navigation */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(248,247,244,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+nav a {
+  display: block;
+  padding: 12px 18px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+nav a:hover, nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Layout */
+.container { max-width: 1400px; margin: 0 auto; padding: 0 40px; }
+section { padding: 50px 0; border-bottom: 1px solid var(--border); }
+section:last-child { border-bottom: none; }
+.section-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+h2 {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 400;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+h3 {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 400;
+  margin: 28px 0 12px;
+  color: var(--text);
+}
+p { margin-bottom: 14px; color: var(--text-dim); max-width: 780px; }
+p strong { color: var(--text); font-weight: 600; }
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 900px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .container { padding: 0 20px; }
+  .hero, .thesis-bar, nav { padding-left: 20px; padding-right: 20px; }
+}
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.card:hover::before { opacity: 1; }
+.card-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.card-big {
+  font-size: 32px;
+  font-family: var(--mono);
+  font-weight: 600;
+}
+
+/* Chart containers */
+.chart-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.chart-wrap h4 {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+canvas { width: 100% !important; }
+
+/* Tables */
+.tbl-wrap {
+  overflow-x: auto;
+  margin: 20px 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+thead th {
+  background: var(--surface2);
+  color: var(--accent);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--accent);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+tbody tr:hover td { background: rgba(184,134,11,0.05); color: var(--text); }
+.val-up { color: var(--green); font-weight: 600; }
+.val-down { color: var(--red); font-weight: 600; }
+.val-accent { color: var(--accent); font-weight: 600; }
+
+/* Conviction chips */
+.conviction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+.conviction.high { background: var(--green-dim); color: var(--green); }
+.conviction.med { background: rgba(184,134,11,0.12); color: var(--accent); }
+.conviction.low { background: rgba(122,122,122,0.1); color: var(--text-muted); }
+
+/* Timeline */
+.timeline { position: relative; padding-left: 28px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--border-accent);
+}
+.tl-item {
+  position: relative;
+  margin-bottom: 20px;
+  padding-left: 24px;
+}
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -24px; top: 6px;
+  width: 10px; height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+}
+.tl-date {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+.tl-text { color: var(--text-dim); font-size: 14px; margin-top: 4px; }
+
+/* Risk bars */
+.risk-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.risk-bar .label {
+  flex: 0 0 200px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.risk-bar .bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.risk-bar .bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease-out;
+}
+.risk-bar .bar-fill.red { background: linear-gradient(90deg, var(--red), var(--orange)); }
+.risk-bar .bar-fill.amber { background: linear-gradient(90deg, var(--accent), var(--orange)); }
+.risk-bar .bar-fill.blue { background: linear-gradient(90deg, var(--accent2), var(--cyan)); }
+.risk-bar .pct {
+  flex: 0 0 40px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+/* Scenario cards */
+.scenario {
+  border-left: 3px solid;
+  padding: 16px 20px;
+  background: var(--surface);
+  border-radius: 0 8px 8px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.scenario.bear { border-color: var(--green); }
+.scenario.base { border-color: var(--accent); }
+.scenario.bull { border-color: var(--red); }
+.scenario-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.scenario.bear .scenario-title { color: var(--green); }
+.scenario.base .scenario-title { color: var(--accent); }
+.scenario.bull .scenario-title { color: var(--red); }
+
+/* Fade-in animation */
+.fade-in {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+
+/* Footer */
+footer {
+  padding: 40px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.8;
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-label">投资研究报告</div>
+  <h1>美国化工与农业板块：<br>霍尔木兹断航下的投资逻辑</h1>
+  <div class="hero-meta">
+    <span><span class="live"></span> 封锁第27天</span>
+    <span>2026年3月27日</span>
+    <span>投资期：战术性 + 结构性</span>
+    <span>覆盖标的：CF · LYB · DOW · CTVA · WLK</span>
+  </div>
+</header>
+
+<!-- THESIS -->
+<div class="thesis-bar">
+  “由于霍尔木兹海峡关闭，全球终端产品价格飙升，而美国化工/农业生产商受益于稳定的国内能源成本——这是一个周期内难得的利润扩张窗口。”
+</div>
+
+<!-- TICKER STRIP -->
+<div class="ticker-strip">
+  <div class="tick"><div class="tick-label">布伦特原油</div><div class="tick-val">$108.01</div><div class="tick-chg up">自2月28日以来+48%</div></div>
+  <div class="tick"><div class="tick-label">WTI原油</div><div class="tick-val">$94.48</div><div class="tick-chg up">+49%</div></div>
+  <div class="tick"><div class="tick-label">亨利港天然气</div><div class="tick-val">$2.90</div><div class="tick-chg" style="color:var(--text-muted)">~0%（不受影响）</div></div>
+  <div class="tick"><div class="tick-label">NOLA 尿素</div><div class="tick-val">$683</div><div class="tick-chg up">+43%</div></div>
+  <div class="tick"><div class="tick-label">欧洲TTF天然气</div><div class="tick-val">~$17</div><div class="tick-chg up">+53%</div></div>
+  <div class="tick"><div class="tick-label">石脑油利润</div><div class="tick-val">$400/吨</div><div class="tick-chg up">相对布伦特+270%</div></div>
+  <div class="tick"><div class="tick-label">霍尔木兹日均船只</div><div class="tick-val"><6</div><div class="tick-chg down">−95%（原为130）</div></div>
+  <div class="tick"><div class="tick-label">VIX恐慌指数</div><div class="tick-val">27.44</div><div class="tick-chg up">+41%</div></div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#conflict" class="active">冲突现状</a>
+  <a href="#supplychain">供应链</a>
+  <a href="#pricing">定价</a>
+  <a href="#stocks">股市表现</a>
+  <a href="#conviction">投资确信度</a>
+  <a href="#scenarios">情景分析</a>
+  <a href="#analog">历史类比</a>
+  <a href="#risks">风险</a>
+  <a href="#catalysts">催化剂</a>
+</nav>
+
+<div class="container">
+
+<!-- SECTION: CONFLICT STATUS -->
+<section id="conflict">
+  <div class="section-label fade-in">第一部分</div>
+  <h2 class="fade-in">冲突现状评估</h2>
+  <div class="grid-2 fade-in">
+    <div>
+      <p><strong>2月28日：</strong>美以发起“史诗狂怒行动”——对伊朗军事、核设施及领导层进行协调打击。最高领袖哈梅内伊丧生。</p>
+      <p><strong>3月2日：</strong>伊斯兰革命卫队(IRGC)确认霍尔木兹海峡对所有外国船只关闭。保险被取消，油轮运输量下降95%。</p>
+      <p><strong>3月19日：</strong>美国开始空袭以重新开放海峡。针对伊朗沿海阵地部署GBU-72钻地弹。</p>
+      <p><strong>3月26日：</strong>以色列击毙伊朗最高海军指挥官坦吉西里。伊朗拒绝与美国直接对话。特朗普将能源打击最后期限延长至4月6日。</p>
+      <p><strong>核心动态：</strong>封锁并非通过海军封锁实现，而是通过廉价无人机+保险体系崩溃。美国国防情报局(DIA)评估：潜在封锁期为1-6个月。22国联盟签署关于保障霍尔木兹海峡安全的声明。</p>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-label">霍尔木兹日均通行</div>
+        <div class="card-big" style="color:var(--red)"><6 艘</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-top:4px">战前：~130 艘/天</div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-label">受困原油供应</div>
+        <div class="card-big" style="color:var(--accent)">~1580万桶/日</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-top:4px">石油市场史上最大规模中断</div>
+      </div>
+      <div class="card">
+        <div class="card-label">IEA战略储备释放</div>
+        <div class="card-big" style="color:var(--cyan)">4亿桶</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text-muted);margin-top:4px">IEA史上最大规模协同释放</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: SUPPLY CHAIN -->
+<section id="supplychain">
+  <div class="section-label fade-in">第二部分</div>
+  <h2 class="fade-in">供应链中断图谱</h2>
+  <div class="grid-3 fade-in">
+    <div class="card">
+      <div class="card-label">氮肥</div>
+      <h3 style="margin-top:0;color:var(--accent)">直接受益逻辑</h3>
+      <p style="font-size:13px">天然气 → 合成氨 → 尿素/UAN。收入与全球基准（新奥尔良尿素）挂钩，成本与亨利港天然气挂钩。价差 = 利润。</p>
+      <div style="font-family:var(--mono);font-size:12px;margin-top:12px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">全球尿素贸易中断</span>
+          <span class="val-up">~30%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">滞留海湾的船只</span>
+          <span class="val-accent">21+</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">海湾地区尿素年出口量</span>
+          <span style="color:var(--text)">2200万吨</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0">
+          <span style="color:var(--text-muted)">经霍尔木兹的硫磺出口</span>
+          <span class="val-accent">~50%</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">作物保护</div>
+      <h3 style="margin-top:0;color:var(--accent2)">成本传导逻辑</h3>
+      <p style="font-size:13px">石化中间体 → 有效成分 → 配方产品。投入成本上升被专有产品的定价权所抵消。</p>
+      <div style="font-family:var(--mono);font-size:12px;margin-top:12px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">欧洲化工附加费</span>
+          <span class="val-up">高达30%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">Corteva美国业务敞口</span>
+          <span style="color:var(--text)">高</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">玉米转大豆种植信号</span>
+          <span class="val-accent">比率 2.5+</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0">
+          <span style="color:var(--text-muted)">净需求影响</span>
+          <span style="color:var(--green)">温和正面</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">石化产品</div>
+      <h3 style="margin-top:0;color:var(--cyan)">结构性受益逻辑</h3>
+      <p style="font-size:13px">美国乙烷裂解装置 vs 亚洲/欧洲石脑油裂解装置。油气价差已大幅拉开。20%的亚洲乙烯遭遇不可抗力。</p>
+      <div style="font-family:var(--mono);font-size:12px;margin-top:12px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">不可抗力事件(亚洲/中东)</span>
+          <span class="val-up">31起</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">受不可抗力影响的亚洲乙烯</span>
+          <span class="val-accent">~20%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">石脑油利润飙升</span>
+          <span class="val-up">$400/吨 (原为$108)</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0">
+          <span style="color:var(--text-muted)">全球天然气/乙烷进料份额</span>
+          <span style="color:var(--text)">45% → 52-55%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: PRICING CHARTS -->
+<section id="pricing">
+  <div class="section-label fade-in">第三部分</div>
+  <h2 class="fade-in">大宗商品定价与价差</h2>
+  <div class="grid-2 fade-in">
+    <div class="chart-wrap">
+      <h4>原油价格走势 (2026)</h4>
+      <canvas id="chartOil" height="220"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h4>天然气：美国 vs 欧洲 vs 亚洲</h4>
+      <canvas id="chartGas" height="220"></canvas>
+    </div>
+  </div>
+  <div class="grid-2 fade-in" style="margin-top:24px">
+    <div class="chart-wrap">
+      <h4>尿素价格走势 ($/吨)</h4>
+      <canvas id="chartUrea" height="220"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h4>自2月28日以来化肥价格变化</h4>
+      <canvas id="chartFert" height="220"></canvas>
+    </div>
+  </div>
+
+  <h3 class="fade-in" style="margin-top:32px">核心定价仪表板</h3>
+  <div class="tbl-wrap fade-in">
+    <table>
+      <thead>
+        <tr><th>指标</th><th>当前</th><th>战前 (2月27日)</th><th>变化</th><th>2022峰值(参考)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>布伦特原油 ($/桶)</td><td>$108.01</td><td>$72.87</td><td class="val-up">+48%</td><td>$139</td></tr>
+        <tr><td>WTI原油 ($/桶)</td><td>$94.48</td><td>$63.60</td><td class="val-up">+49%</td><td>$123</td></tr>
+        <tr><td>亨利港天然气 ($/MMBtu)</td><td>$2.90</td><td>$2.90</td><td style="color:var(--text-muted)">~0%</td><td>$9.68</td></tr>
+        <tr><td>欧洲TTF天然气</td><td>~$17/MMBtu</td><td>$11.10</td><td class="val-up">+53%</td><td>$100</td></tr>
+        <tr><td>亚洲JKM液化天然气</td><td>~$19/MMBtu</td><td>~$12</td><td class="val-up">+58%</td><td>$84</td></tr>
+        <tr><td>NOLA 尿素 ($/吨)</td><td>$683+</td><td>$475–516</td><td class="val-up">+32–43%</td><td>~$900</td></tr>
+        <tr><td>埃及FOB尿素</td><td>~$700</td><td>$400–490</td><td class="val-up">+43–75%</td><td>$1,000+</td></tr>
+        <tr><td>石脑油利润 / 布伦特</td><td>$400/吨</td><td>$108/吨</td><td class="val-up">+270%</td><td>—</td></tr>
+        <tr><td>DAP/MAP ($/吨)</td><td>$700+</td><td>~$550</td><td class="val-up">+27%</td><td>$1,000+</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SECTION: EQUITIES -->
+<section id="stocks">
+  <div class="section-label fade-in">第四部分</div>
+  <h2 class="fade-in">股票表现与覆盖范围</h2>
+  <div class="grid-2 fade-in">
+    <div class="chart-wrap">
+      <h4>年初至今股票表现 (%)</h4>
+      <canvas id="chartStocks" height="250"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h4>当前价格 vs 分析师一致目标价</h4>
+      <canvas id="chartValuation" height="250"></canvas>
+    </div>
+  </div>
+  <div class="tbl-wrap fade-in" style="margin-top:24px">
+    <table>
+      <thead>
+        <tr><th>代码</th><th>公司</th><th>价格 (3月27日)</th><th>年初至今</th><th>52周范围</th><th>分析师目标价</th><th>隐含变动</th><th>核心催化剂</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="val-accent">CF</td><td>CF Industries</td><td>$131</td><td class="val-up">+76%</td><td>$67–137</td><td>$105–110</td><td class="val-down">−16 至 −20%</td><td>最纯正的氮肥标的；创历史新高</td></tr>
+        <tr><td class="val-accent">LYB</td><td>LyondellBasell</td><td>$75.20</td><td class="val-up">+74%</td><td>$42–75</td><td>$70–80</td><td style="color:var(--text-muted)">±0%</td><td>花旗双重上调评级；乙烷优势</td></tr>
+        <tr><td class="val-accent">DOW</td><td>Dow Inc.</td><td>$39.47</td><td class="val-up">+47%</td><td>$27–40</td><td>$38–40</td><td style="color:var(--text-muted)">±0%</td><td>花旗上调至买入；4月订单强劲</td></tr>
+        <tr><td class="val-accent">CTVA</td><td>Corteva</td><td>$80.99</td><td class="val-up">+16%</td><td>$59–81</td><td>$69–77</td><td class="val-down">−5 至 −15%</td><td>创历史新高；业务拆分催化剂</td></tr>
+        <tr><td class="val-accent">NTR</td><td>Nutrien</td><td>~$72</td><td class="val-up">+30%</td><td>$49–72</td><td>$66–96</td><td style="color:var(--text-muted)">混合</td><td>杰富瑞上调至买入，目标价$96</td></tr>
+        <tr><td class="val-accent">WLK</td><td>Westlake</td><td>~$135</td><td class="val-up">+40%</td><td>$96–145</td><td>~$130</td><td style="color:var(--text-muted)">−5%</td><td>美国PE/PVC优势</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SECTION: CONVICTION -->
+<section id="conviction">
+  <div class="section-label fade-in">第五部分</div>
+  <h2 class="fade-in">确信度层级与深度分析</h2>
+  
+  <div class="fade-in" style="margin-bottom:32px">
+    <div class="card" style="border-left:3px solid var(--accent)">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div>
+          <span class="conviction high">#1 最高确信度</span>
+          <h3 style="margin:8px 0 4px">CF Industries (CF) — $131</h3>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--text-muted)">全球最大合成氨生产商 · 占据北美40%的氮肥市场</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--mono);font-size:28px;font-weight:600;color:var(--green)">+76% 年初至今</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted)">标普500表现最佳股票</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <p style="font-size:13px"><strong>看涨逻辑：</strong>机械性的利润扩张——收入按全球尿素价格（$683/吨）计算，成本按亨利港天然气价格（$2.90）计算。2025财年调整后EBITDA为28.9亿美元（同比+27%）。产能利用率97%。Blue Point合成氨工厂提供结构性增长。预测市场：3月31日前解决冲突的可能性仅为19.5%。</p>
+        </div>
+        <div>
+          <p style="font-size:13px"><strong>看跌逻辑：</strong>估值偏高，一致预期为$105–110。瑞穗下调评级至跑输大盘。美国司法部(DOJ)反垄断调查。内部人士抛售：过去一年内25次抛售/0次买入（前CEO于3月9日抛售627万美元）。盈利见顶时的估值倍数压缩风险。局势迅速降温将导致溢价崩溃。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2 fade-in">
+    <div class="card" style="border-left:3px solid var(--accent2)">
+      <span class="conviction med">#2 LyondellBasell (LYB)</span>
+      <h3 style="margin:8px 0 4px">$75.20 — +74% 年初至今</h3>
+      <p style="font-size:13px"><strong>投资逻辑：</strong>美国乙烷裂解装置优势 + 欧洲业务转型。CFO确认4月订单簿是“几个月来最强劲的”。花旗双重上调评级。KeyBanc预计全球PE供应将收紧5-10%。</p>
+      <p style="font-size:13px"><strong>风险：</strong>欧洲业务是拖累；LYB宣布欧洲聚烯烃生产遭遇不可抗力。如果下游需求崩溃，将面临衰退带来的销量风险。</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--cyan)">
+      <span class="conviction med">#3 Dow Inc. (DOW)</span>
+      <h3 style="margin:8px 0 4px">$39.47 — +47% 年初至今</h3>
+      <p style="font-size:13px"><strong>投资逻辑：</strong>广泛的石化行业受益者。首席执行官Fitterling表示：“乙烷基本面没有改变，但石油基本面发生了巨大变化。”花旗上调至买入，目标价$40。</p>
+      <p style="font-size:13px"><strong>风险：</strong>多元化削弱了杠杆效应。建筑/汽车行业疲软。4月23日的第一季度财报将是首次确认。</p>
+    </div>
+  </div>
+  <div class="grid-2 fade-in" style="margin-top:16px">
+    <div class="card" style="border-left:3px solid var(--purple)">
+      <span class="conviction low">#4 Corteva (CTVA)</span>
+      <h3 style="margin:8px 0 4px">$80.99 — +16% 年初至今 (创历史新高)</h3>
+      <p style="font-size:13px">通过农业支出周期成为间接受益者。专有产品组合提供定价权。玉米向大豆的种植转移增加了除草剂需求。但瑞银和摩根大通下调评级至中性；对霍尔木兹海峡的直接杠杆较小。</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--text-muted)">
+      <span class="conviction low">#5 LSB Industries (LXU)</span>
+      <h3 style="margin:8px 0 4px">小盘股氮肥杠杆</h3>
+      <p style="font-size:13px">对氮肥价格飙升具有更高的贝塔(Beta)敞口。机构覆盖较少，流动性较低。规模虽小但是纯粹的投资标的。仅适合激进的战术性持仓。</p>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION: SCENARIOS -->
+<section id="scenarios">
+  <div class="section-label fade-in">第六部分</div>
+  <h2 class="fade-in">情景分析</h2>
+  <div class="grid-3 fade-in">
+    <div class="scenario bear">
+      <div class="scenario-title">看跌情景 — 快速解决</div>
+      <p style="font-size:13px"><strong>霍尔木兹：</strong>2026年4月重新开放<br>
+      <strong>布伦特原油：</strong>跌至$80–85<br>
+      <strong>尿素：</strong>回落至$450–500/吨<br>
+      <strong>CF股价：</strong>回归至$90–100<br>
+      <strong>发生概率：</strong>~20%</p>
+      <p style="font-size:12px;color:var(--text-muted)">即使在这种情况下，花旗认为由于物流瓶颈、保险正常化和装置重启，供应驱动的定价仍将维持数月。12月原油期货仍为$79.70（较战前高出10%）。</p>
+    </div>
+    <div class="scenario base">
+      <div class="scenario-title">基准情景 — 三季度部分重新开放</div>
+      <p style="font-size:13px"><strong>霍尔木兹：</strong>限制状态持续至第三季度<br>
+      <strong>布伦特原油：</strong>$95–110区间<br>
+      <strong>尿素：</strong>维持在$600–750/吨<br>
+      <strong>CF股价：</strong>$120–140区间，Q1财报为催化剂<br>
+      <strong>发生概率：</strong>~50%</p>
+      <p style="font-size:12px;color:var(--text-muted)">符合美国国防情报局评估、原油现货升水结构，以及中国维持出口禁令至8月的预期。春夏季种植季使氮肥需求保持高位。</p>
+    </div>
+    <div class="scenario bull">
+      <div class="scenario-title">看涨情景 — 长期持续 / 局势升级</div>
+      <p style="font-size:13px"><strong>霍尔木兹：</strong>封锁持续至2027年及以后或冲突扩大<br>
+      <strong>布伦特原油：</strong>$120以上（若哈尔克岛被占领则更高）<br>
+      <strong>尿素：</strong>$800以上（逼近2022年峰值）<br>
+      <strong>CF股价：</strong>$150以上，伴随结构性估值重估<br>
+      <strong>发生概率：</strong>~30%</p>
+      <p style="font-size:12px;color:var(--text-muted)">伊朗公布了占该地区烯烃供应量32%的报复目标清单。胡塞武装警告不要尝试重新开放霍尔木兹海峡。在这样的油价水平下，经济衰退风险急剧上升。</p>
+    </div>
+  </div>
+
+  <h3 class="fade-in" style="margin-top:32px">中国出口政策 — 关键摇摆变量</h3>
+  <div class="card fade-in">
+    <p style="max-width:none"><strong>当前状态：</strong>北京禁止了氮钾复合肥的出口，重申了尿素限制。中国50-80%的化肥出口（约4000万吨）现已受到限制。只有硫酸铵仍可出口。上海会议上的行业消息人士表示：预计禁令在8月之前不会取消。</p>
+    <p style="max-width:none"><strong>战略考量：</strong>惠誉解决方案(BMI)指出：“在全球供应紧张期间，中国选择限制供应，而不是伸出援手。”战略与国际研究中心(CSIS)表示：“中国非常不愿采取任何可能推高国内粮食，特别是动物饲料价格的行动。”印度已正式向中国要求尿素出口配额。如果中国在下半年维持限制，氮肥定价的看涨情景将变得更加可能发生。</p>
+  </div>
+</section>
+
+<!-- SECTION: ANALOGS -->
+<section id="analog">
+  <div class="section-label fade-in">第七部分</div>
+  <h2 class="fade-in">历史类比分析</h2>
+  <div class="tbl-wrap fade-in">
+    <table>
+      <thead>
+        <tr><th>事件</th><th>供应减少量</th><th>化肥影响</th><th>化工板块反应</th><th>暴利持续时间</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="val-accent">1973年石油禁运</td>
+          <td>约450万桶/日 (7%)</td>
+          <td>温和</td>
+          <td>美国利润率大幅扩张；欧洲开始产能整合</td>
+          <td>12–18 个月</td>
+        </tr>
+        <tr>
+          <td class="val-accent">2022年俄乌冲突</td>
+          <td>实际约100-200万桶/日</td>
+          <td>尿素+40%，DAP+30%</td>
+          <td>欧洲天然气危机 → 裂解装置永久关闭(巴斯夫)</td>
+          <td>6–12 个月</td>
+        </tr>
+        <tr>
+          <td class="val-accent">2026年霍尔木兹(当前)</td>
+          <td style="color:var(--red);font-weight:600">~1580万桶/日</td>
+          <td>尿素+43%，DAP+27%</td>
+          <td>31起不可抗力；20%亚洲乙烯遭遇不可抗力</td>
+          <td>持续中(第27天)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="fade-in"><strong>核心洞察：</strong>以桶数计算，当前的中断规模是自1973年以来最大的，但美国国内的能源隔绝性要强得多（得益于页岩油气革命）。这为美国生产商创造了现代史上最有利的局面：全球价格飙升，而美国成本保持平稳。2022年，CF在3个月内上涨了约80%；而在2026年，它在27天内就上涨了+76%——这笔交易正在压缩历史类比的时间线。</p>
+</section>
+
+<!-- SECTION: RISKS -->
+<section id="risks">
+  <div class="section-label fade-in">第八部分</div>
+  <h2 class="fade-in">风险因素分析</h2>
+  <div class="fade-in" style="margin-bottom:24px">
+    <div class="risk-bar"><div class="label">经济衰退 / 需求破坏</div><div class="bar-track"><div class="bar-fill red" style="width:72%"></div></div><div class="pct">72%</div></div>
+    <div class="risk-bar"><div class="label">局势迅速降温</div><div class="bar-track"><div class="bar-fill amber" style="width:45%"></div></div><div class="pct">45%</div></div>
+    <div class="risk-bar"><div class="label">中国取消出口禁令</div><div class="bar-track"><div class="bar-fill amber" style="width:25%"></div></div><div class="pct">25%</div></div>
+    <div class="risk-bar"><div class="label">美国对化学品实施出口管制</div><div class="bar-track"><div class="bar-fill blue" style="width:35%"></div></div><div class="pct">35%</div></div>
+    <div class="risk-bar"><div class="label">冲突升级（哈尔克岛/沙特）</div><div class="bar-track"><div class="bar-fill red" style="width:55%"></div></div><div class="pct">55%</div></div>
+    <div class="risk-bar"><div class="label">盈利见顶时的估值倍数压缩</div><div class="bar-track"><div class="bar-fill amber" style="width:80%"></div></div><div class="pct">80%</div></div>
+  </div>
+  <p class="fade-in" style="max-width:none"><strong>达拉斯联储模型：</strong>霍尔木兹海峡关闭 → WTI达到$98，第二季度全球GDP年化下降2.9%。每一次超过100%幅度的石油冲击都在12个月内引发了经济衰退。对于化工股而言，如果衰退严重，销量下降可能足以抵消利润率扩张——这是DOW/LYB的主要看跌逻辑。CF受到的影响较小，因为其销量主要面向农业（需求缺乏弹性），而不是工业。</p>
+  <p class="fade-in" style="max-width:none"><strong>地缘政治尾部风险：</strong>伊朗公布了一份中东石化设施清单，涵盖了该地区约32%的烯烃供应、42%的PE产能、40%的PP产能，作为潜在的报复目标。胡塞武装警告不要努力重新开放霍尔木兹海峡。根据Vanda Insights的数据，亚洲实物原油较账面原油存在$40的溢价——“史无前例”。</p>
+</section>
+
+<!-- SECTION: CATALYSTS -->
+<section id="catalysts">
+  <div class="section-label fade-in">第九部分</div>
+  <h2 class="fade-in">关键日期与催化剂日历</h2>
+  <div class="grid-2 fade-in">
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-date">3月31日</div><div class="tl-text"><strong>美国农业部意向种植报告</strong> —— 玉米/大豆种植面积转移；氮肥需求信号。化肥成本冲击预计将放大玉米向大豆的轮作。</div></div>
+      <div class="tl-item"><div class="tl-date">4月6日</div><div class="tl-text"><strong>特朗普能源打击最后期限</strong> —— 石油/天然气局势升级或降温的催化剂。伊朗拒绝直接谈判；反制条件包括对霍尔木兹海峡的主权要求。</div></div>
+      <div class="tl-item"><div class="tl-date">4月7日</div><div class="tl-text"><strong>EIA短期能源展望(STEO)发布</strong> —— 冲突重新评估后更新的石油价格和产量预测。</div></div>
+      <div class="tl-item"><div class="tl-date">4月9日</div><div class="tl-text"><strong>WASDE世界农产品报告</strong> —— 全球谷物供需；新作物年度化肥需求的背景情况。</div></div>
+      <div class="tl-item"><div class="tl-date">4月23日</div><div class="tl-text"><strong>Dow 2026年第一季度财报</strong> —— 危机期间首家报告业绩的大型化工公司。确认乙烷优势。</div></div>
+      <div class="tl-item"><div class="tl-date">5月6日</div><div class="tl-text"><strong>CF Industries 2026年第一季度财报</strong> —— 确认暴利利润。前瞻性指引对维持看涨逻辑至关重要。</div></div>
+    </div>
+    <div>
+      <h3>战术性平仓触发因素</h3>
+      <p style="font-size:13px">密切关注以下信号以退出战争期头寸：霍尔木兹海峡日均通行船只 > 30艘；宣布停火；中国取消尿素出口限制；布伦特原油跌破$85；VIX恐慌指数回落至20以下。</p>
+      <h3>结构性估值重估触发因素</h3>
+      <p style="font-size:13px">密切关注以下信号以建立长期头寸：欧洲裂解装置永久性关闭；长期供应合同向美国生产商转移；美国本土产能扩张公告；全球天然气/乙烷进料份额超过50%。</p>
+      <h3 style="margin-top:24px">TradingView / Pine Script 交易机会</h3>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--text-dim);line-height:2">
+        价差图：CF股价 vs 亨利港天然气 (利润率代理指标)<br>
+        价差图：乙烷 (Mont Belvieu) vs 石脑油 (SGP)<br>
+        比率图：CF/XLB 或 CF/SPY —— 相对表现<br>
+        警报：亨利港天然气突破 > $4 (对投资逻辑的风险)<br>
+        警报：WTI原油跌破 < $80 (战争溢价消退)
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  机密 —— 仅供投资研究使用<br>
+  来源：达拉斯联储, EIA, CNBC, 彭博社, NPR, 路透社, CRU, ICIS, farmdoc daily, 标普全球(S&P Global), Argus Media, 伦敦证券交易所集团(LSEG)<br>
+  最后更新时间：2026年3月27日 · 不构成投资建议
+</footer>
+
+<script>
+// Chart defaults
+Chart.defaults.color = '#7a7a7a';
+Chart.defaults.borderColor = '#e2dfd6';
+Chart.defaults.font.family = "'JetBrains Mono', 'Consolas', monospace";
+Chart.defaults.font.size = 11;
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+Chart.defaults.plugins.legend.labels.padding = 16;
+
+// Oil Price Chart
+new Chart(document.getElementById('chartOil'), {
+  type: 'line',
+  data: {
+    labels: ['1月1日','1月15日','2月1日','2月15日','2月27日','3月3日','3月9日','3月13日','3月20日','3月27日'],
+    datasets: [{
+      label: '布伦特',
+      data: [82.8, 84, 86, 88, 72.87, 96, 94, 119.5, 108, 108],
+      borderColor: '#b8860b',
+      backgroundColor: 'rgba(184,134,11,0.08)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 3,
+      borderWidth: 2,
+    },{
+      label: 'WTI原油',
+      data: [78.5, 80, 82, 84, 63.6, 86, 90, 98.3, 93, 94.5],
+      borderColor: '#2563a0',
+      backgroundColor: 'rgba(37,99,160,0.06)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 3,
+      borderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      annotation: {},
+      tooltip: { mode: 'index', intersect: false },
+    },
+    scales: {
+      y: { 
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => '$' + v }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Gas Price Chart
+new Chart(document.getElementById('chartGas'), {
+  type: 'bar',
+  data: {
+    labels: ['亨利港(美国)', 'TTF(欧洲)', 'JKM(亚洲)'],
+    datasets: [{
+      label: '战前 (2月27日)',
+      data: [2.9, 11.1, 12],
+      backgroundColor: 'rgba(122,122,122,0.2)',
+      borderColor: '#999',
+      borderWidth: 1,
+      borderRadius: 4,
+    },{
+      label: '当前 (3月27日)',
+      data: [2.9, 17, 19],
+      backgroundColor: ['rgba(26,122,58,0.35)', 'rgba(192,57,43,0.35)', 'rgba(192,57,43,0.35)'],
+      borderColor: ['#1a7a3a', '#c0392b', '#c0392b'],
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { 
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => '$' + v + '/MMBtu' }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Urea Price Chart
+new Chart(document.getElementById('chartUrea'), {
+  type: 'line',
+  data: {
+    labels: ['12月25日','1月26日','2月1日','2月15日','2月27日','3月5日','3月10日','3月17日','3月27日'],
+    datasets: [{
+      label: 'NOLA 尿素',
+      data: [350, 400, 430, 450, 516, 683, 650, 674, 683],
+      borderColor: '#b8860b',
+      backgroundColor: 'rgba(184,134,11,0.08)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 4,
+      borderWidth: 2.5,
+    },{
+      label: '埃及FOB尿素',
+      data: [340, 380, 400, 420, 482, 700, 680, 690, 700],
+      borderColor: '#0e7c8c',
+      backgroundColor: 'rgba(14,124,140,0.06)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 3,
+      borderWidth: 2,
+    },{
+      label: '2022峰值参考',
+      data: [900,900,900,900,900,900,900,900,900],
+      borderColor: 'rgba(192,57,43,0.35)',
+      borderDash: [6,4],
+      borderWidth: 1,
+      pointRadius: 0,
+      fill: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: {
+        min: 200,
+        max: 1000,
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => '$' + v }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Fertilizer Changes Chart
+new Chart(document.getElementById('chartFert'), {
+  type: 'bar',
+  data: {
+    labels: ['尿素 (NOLA)', '埃及FOB尿素', 'DAP/MAP', 'UAN', '无水氨 (NH₃)', '钾肥'],
+    datasets: [{
+      label: '自2月28日以来变动 (%)',
+      data: [43, 50, 27, 14, 7, 3],
+      backgroundColor: ctx => {
+        const v = ctx.raw;
+        if (v > 30) return 'rgba(192,57,43,0.55)';
+        if (v > 15) return 'rgba(184,134,11,0.55)';
+        return 'rgba(122,122,122,0.3)';
+      },
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => '+' + v + '%' }
+      },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// Stock Performance Chart
+new Chart(document.getElementById('chartStocks'), {
+  type: 'bar',
+  data: {
+    labels: ['CF', 'LYB', 'DOW', 'WLK', 'NTR', 'CTVA', '标普500'],
+    datasets: [{
+      label: '年初至今表现 (%)',
+      data: [76, 74, 47, 40, 30, 16, -5.8],
+      backgroundColor: ctx => ctx.raw >= 0 
+        ? 'rgba(184,134,11,0.55)' 
+        : 'rgba(192,57,43,0.55)',
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: {
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => (v >= 0 ? '+' : '') + v + '%' }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Valuation Chart
+new Chart(document.getElementById('chartValuation'), {
+  type: 'bar',
+  data: {
+    labels: ['CF', 'LYB', 'DOW', 'CTVA', 'NTR'],
+    datasets: [{
+      label: '当前价格',
+      data: [131, 75.2, 39.5, 81, 72],
+      backgroundColor: 'rgba(184,134,11,0.55)',
+      borderRadius: 4,
+    },{
+      label: '分析师平均目标价',
+      data: [107.5, 75, 39, 73, 81],
+      backgroundColor: 'rgba(122,122,122,0.25)',
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: {
+        grid: { color: 'rgba(0,0,0,0.06)' },
+        ticks: { callback: v => '$' + v }
+      },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// Scroll fade-in
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// Nav active state
+const navLinks = document.querySelectorAll('nav a');
+const sections = document.querySelectorAll('section');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>
